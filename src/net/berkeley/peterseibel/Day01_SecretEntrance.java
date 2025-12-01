@@ -8,6 +8,8 @@ import static java.lang.Math.*;
 
 public class Day01_SecretEntrance implements Solution<Path, Integer> {
 
+  public int day() { return 1; }
+
   public Integer part1(Path input) throws IOException {
     int p = 50;
     int count = 0;
@@ -22,18 +24,23 @@ public class Day01_SecretEntrance implements Solution<Path, Integer> {
     int p = 50;
     int count = 0;
     for (int n : lines(input).mapToInt(this::parse).toArray()) {
-      //IO.println("Rotating " + n);
       if (n > 0 && (p + n) >= 100) {
         count += 1 + (n - (100 - p)) / 100;
       } else if (n < 0 && (p + n) <= 0) {
         int first = p > 0 ? 1 : 0;
         count += first + (abs(n) - p) / 100;
       }
-      // if n == 0 we didn't turn at all so it shouldn't change, I don't think
       p = floorMod(p + n, 100);
-      //IO.println("p: %d; count: %d".formatted(p, count));
     }
     return count;
+  }
+
+  public Path input(String name, int part) {
+    return Util.inputPath(name, 1, part);
+  }
+
+  public Integer expected(String name, int part) {
+    return Util.expectedInteger(name, 1, part);
   }
 
   private int parse(String line) {

@@ -15,4 +15,12 @@ public interface Solution<T, R> {
   public default R part2(T input) throws Exception {
     throw new Error("NYI");
   }
+
+  public int day();
+
+  public R expected(String name, int part);
+
+  public T input(String name, int part);
+
+
 }
