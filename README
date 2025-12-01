@@ -1,0 +1,11 @@
+# Advent of code
+
+In this project we'll start using packages. When you run make for the first time
+it will create a first .java file with a proper package declaration in the
+proper directory. Thereafter you can make other classes in that same directory
+with the same package declaration. In addition to being good practice, this will
+let you use static imports from your own classes.
+
+If you want you can use the Makefile to build the project in the terminal with
+the `make` command. First you'll need to set the MAIN_CLASS variable in the
+Makefile to the name of your main class.
