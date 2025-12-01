@@ -1,8 +1,8 @@
 SHELL		:= bash -O globstar
-USERNAME	:= $(error Set the USERNAME variable in the Makefile to the part of your student email before the @)
-MAIN_CLASS	:= net.berkeley.students.$(USERNAME).AdventOfCode
+USERNAME	:= peterseibel
+MAIN_CLASS	:= net.berkeley.$(USERNAME).AdventOfCode
 
-first_file := src/net/berkeley/students/$(USERNAME)/AdventOfCode.java
+first_file := src/net/berkeley/$(USERNAME)/AdventOfCode.java
 
 all: build run
 
@@ -19,7 +19,7 @@ clean:
 	rm -rf classes
 
 $(first_file): | $(dir $(first_file))
-	echo "package net.berkeley.students.$(USERNAME);" > $@
+	echo "package net.berkeley.$(USERNAME);" > $@
 	echo "" >> $@
 	echo "public class $$(basename $@ .java) {" >> $@
 	echo "  public static void main(String[] args) {" >> $@
