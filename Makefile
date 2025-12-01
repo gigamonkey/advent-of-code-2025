@@ -7,7 +7,7 @@ first_file := src/net/berkeley/$(USERNAME)/AdventOfCode.java
 all: build run
 
 build: | $(first_file) classes
-	javac -d classes -Xdiags:verbose -Xlint:all src/**/*.java
+	javac -d classes -Xdiags:verbose -Xlint:all -Xlint:-serial -Xlint:-this-escape src/**/*.java
 
 run:
 	java -cp classes $(MAIN_CLASS)
