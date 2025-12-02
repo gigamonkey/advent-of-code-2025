@@ -77,12 +77,12 @@ public abstract class Solution<T, R> {
     if (input.isPresent()) {
       try {
         if (expected.isPresent()) {
-          var ok = checkExpected(part, input.get(), expected.get());
+          var ok = result(part, input.get()).equals(expected.get());
           var emoji = ok ? "✅" : "❌";
           var label = ok ? "pass" : "fail";
           IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
         } else {
-          var r = part == 1 ? part1(input.get()) : part2(input.get());
+          var r = result(part, input.get());
           IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, r));
         }
       } catch (IOException ioe) {
@@ -93,7 +93,7 @@ public abstract class Solution<T, R> {
     }
   }
 
-  private boolean checkExpected(int part, T input, R expected) throws IOException {
-    return (part == 1 ? part1(input) : part2(input)).equals(expected);
+  private R result(int part, T input) throws IOException {
+    return part == 1 ? part1(input) : part2(input);
   }
 }
