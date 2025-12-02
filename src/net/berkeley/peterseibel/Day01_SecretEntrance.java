@@ -2,14 +2,13 @@ package net.berkeley.peterseibel;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.*;
-import static java.nio.file.Files.*;
 
 import module java.base;
 
 public class Day01_SecretEntrance extends Solution<List<String>, Integer> {
 
   public Day01_SecretEntrance() {
-    super(1);
+    super(1, Data::asLines, Data::asInteger);
   }
 
   public Integer part1(List<String> input) throws IOException {
@@ -37,15 +36,6 @@ public class Day01_SecretEntrance extends Solution<List<String>, Integer> {
   }
 
   private int parse(String line) {
-    int n = parseInt(line.substring(1));
-    return line.startsWith("R") ? n : -n;
-  }
-
-  protected List<String> input(Path p) {
-    return asLines(p);
-  }
-
-  protected Integer expected(Path p) {
-    return asInteger(p);
+    return (line.startsWith("R") ? 1 : -1) * parseInt(line.substring(1));
   }
 }

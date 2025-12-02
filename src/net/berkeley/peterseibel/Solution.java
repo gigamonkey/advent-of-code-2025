@@ -1,15 +1,17 @@
 package net.berkeley.peterseibel;
 
-import static java.nio.file.Files.*;
-
 import module java.base;
 
 public abstract class Solution<I, R> {
 
   private final int day;
+  private final Function<Path, I> inputParser;
+  private final Function<Path, R> expectedParser;
 
-  public Solution(int day) {
+  public Solution(int day, Function<Path, I> inputParser, Function<Path, R> expectedParser) {
     this.day = day;
+    this.inputParser = inputParser;
+    this.expectedParser = expectedParser;
   }
 
   /**
@@ -25,78 +27,39 @@ public abstract class Solution<I, R> {
   }
 
   /**
-   * Get the input for test or puzzle from its Path.
+   * Check all the parts we have inputs for.
    */
-  protected abstract I input(Path p);
-
-  /**
-   * Get the expected value for test or puzzle from its Path.
-   */
-  protected abstract R expected(Path p);
-
-  /**
-   * Check all the parts.
-   */
-  public void check() {
+  public final void check() {
     check("test", 1);
     check("puzzle", 1);
     check("test", 2);
     check("puzzle", 2);
   }
 
-  protected Optional<Path> maybeInputPath(String name, int part) {
-    Path p = Path.of("inputs/day-%02d/%s.txt".formatted(day, name));
-    return Optional.of(p).filter(Files::exists);
-  }
-
-  protected Optional<Path> maybeExpectedPath(String name, int part) {
-    Path p = Path.of("inputs/day-%02d/%s.part%d.expected".formatted(day, name, part));
-    return Optional.of(p).filter(Files::exists);
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Utility methods for extracting data from files.
-
-  protected String asString(Path p) {
-    try {
-      return readString(p);
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
-
-  protected List<String> asLines(Path p) {
-    try {
-      return lines(p).toList();
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
-
-  protected Integer asInteger(Path p) {
-    return Integer.valueOf(asString(p).trim());
-  }
-
-  protected Long asLong(Path p) {
-    return Long.valueOf(asString(p).trim());
-  }
-
   //////////////////////////////////////////////////////////////////////////////
   // Actual checking code
 
+  private Optional<I> maybeInput(String name, int part) {
+    Path p = Path.of("inputs/day-%02d/%s.txt".formatted(day, name));
+    return Optional.of(p).filter(Files::exists).map(inputParser);
+  }
+
+  private Optional<R> maybeExpected(String name, int part) {
+    Path p = Path.of("inputs/day-%02d/%s.part%d.expected".formatted(day, name, part));
+    return Optional.of(p).filter(Files::exists).map(expectedParser);
+  }
+
   private void check(String name, int part) {
-    maybeInputPath(name, part)
-        .map(this::input)
-        .ifPresentOrElse(in -> checkInput(in, name, part), () -> noInput(name, part));
+    maybeInput(name, part)
+        .ifPresentOrElse(input -> checkInput(input, name, part), () -> noInput(name, part));
   }
 
   private void checkInput(I input, String name, int part) {
     try {
-      var result = result(part, input);
-      maybeExpectedPath(name, part)
-          .map(this::expected)
+      var result = part == 1 ? part1(input) : part2(input);
+      maybeExpected(name, part)
           .ifPresentOrElse(
-              exp -> checkExpected(result, exp, name, part),
+              expected -> checkExpected(result, expected, name, part),
               () -> showExpected(result, name, part));
     } catch (IOException ioe) {
       IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
@@ -117,9 +80,5 @@ public abstract class Solution<I, R> {
 
   private void noInput(String name, int part) {
     IO.println("❓Day %d, part %d - %s: No input".formatted(day, part, name));
-  }
-
-  private R result(int part, I input) throws IOException {
-    return part == 1 ? part1(input) : part2(input);
   }
 }
