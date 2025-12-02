@@ -1,8 +1,8 @@
 package net.berkeley.peterseibel;
 
-import module java.base;
-
 import static net.berkeley.peterseibel.Util.*;
+
+import module java.base;
 
 public class AdventOfCode {
 

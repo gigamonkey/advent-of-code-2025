@@ -1,8 +1,8 @@
 package net.berkeley.peterseibel;
 
-import module java.base;
-
 import static java.nio.file.Files.*;
+
+import module java.base;
 
 public class Util {
 
@@ -33,6 +33,4 @@ public class Util {
   public static Long asLong(Path p) {
     return Long.valueOf(asString(p).trim());
   }
-
-
 }

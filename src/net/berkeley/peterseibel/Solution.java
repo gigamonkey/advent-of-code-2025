@@ -22,7 +22,9 @@ public abstract class Solution<T, R> {
     throw new Error("NYI");
   }
 
-  public int day() { return day; }
+  public int day() {
+    return day;
+  }
 
   public abstract Optional<R> expected(String name, int part) throws IOException;
 
@@ -34,7 +36,10 @@ public abstract class Solution<T, R> {
 
     if (input.isPresent()) {
       if (expected.isPresent()) {
-        var ok = part == 1 ? part1(input.get()).equals(expected.get()) : part2(input.get()).equals(expected.get());
+        var ok =
+            part == 1
+                ? part1(input.get()).equals(expected.get())
+                : part2(input.get()).equals(expected.get());
         IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, ok ? "pass" : "fail"));
       } else {
         var r = part == 1 ? part1(input.get()) : part2(input.get());
@@ -51,5 +56,4 @@ public abstract class Solution<T, R> {
     check("test", 2);
     check("puzzle", 2);
   }
-
 }

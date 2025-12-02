@@ -1,11 +1,10 @@
 package net.berkeley.peterseibel;
 
-import module java.base;
-
-import static java.nio.file.Files.*;
-import static java.lang.Integer.parseInt;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
+import static java.nio.file.Files.*;
+
+import module java.base;
 
 public class Day02_GiftShop extends Solution<Path, Long> {
 
@@ -56,6 +55,4 @@ public class Day02_GiftShop extends Solution<Path, Long> {
   public Optional<Long> expected(String name, int part) throws IOException {
     return Util.maybeExpectedPath(name, day(), part).map(Util::asLong);
   }
-
-
 }

@@ -12,6 +12,9 @@ build: | $(first_file) classes
 run:
 	java -cp classes $(MAIN_CLASS)
 
+format:
+	gjf src/**/*.java
+
 classes:
 	mkdir $@
 

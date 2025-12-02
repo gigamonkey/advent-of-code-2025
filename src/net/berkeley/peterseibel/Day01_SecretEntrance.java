@@ -1,10 +1,10 @@
 package net.berkeley.peterseibel;
 
-import module java.base;
-
-import static java.nio.file.Files.*;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.*;
+import static java.nio.file.Files.*;
+
+import module java.base;
 
 public class Day01_SecretEntrance extends Solution<Path, Integer> {
 
@@ -44,5 +44,4 @@ public class Day01_SecretEntrance extends Solution<Path, Integer> {
     int n = parseInt(line.substring(1));
     return line.startsWith("R") ? n : -n;
   }
-
 }
