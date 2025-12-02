@@ -32,11 +32,11 @@ public class Day01_SecretEntrance extends Solution<Path, Integer> {
     return count;
   }
 
-  public Optional<Path> input(String name, int part) throws IOException {
+  public Optional<Path> input(String name, int part) {
     return maybeInputPath(name, part);
   }
 
-  public Optional<Integer> expected(String name, int part) throws IOException {
+  public Optional<Integer> expected(String name, int part) {
     return maybeExpectedPath(name, part).map(this::asInteger);
   }
 

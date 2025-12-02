@@ -19,15 +19,15 @@ public class Day02_GiftShop extends Solution<Path, Long> {
     super(2);
   }
 
-  public Long part1(Path input) throws IOException {
+  public Long part1(Path input) {
     return sumInvalid(input, this::isInvalid);
   }
 
-  public Long part2(Path input) throws IOException {
+  public Long part2(Path input) {
     return sumInvalid(input, this::isInvalid2);
   }
 
-  private Long sumInvalid(Path input, LongPredicate pred) throws IOException {
+  private Long sumInvalid(Path input, LongPredicate pred) {
     String text = asString(input).trim();
     long sum = 0;
     for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
@@ -48,11 +48,11 @@ public class Day02_GiftShop extends Solution<Path, Long> {
     return String.valueOf(n).matches("(.*)\\1{1,}");
   }
 
-  public Optional<Path> input(String name, int part) throws IOException {
+  public Optional<Path> input(String name, int part) {
     return maybeInputPath(name, part);
   }
 
-  public Optional<Long> expected(String name, int part) throws IOException {
+  public Optional<Long> expected(String name, int part) {
     return maybeExpectedPath(name, part).map(this::asLong);
   }
 }
