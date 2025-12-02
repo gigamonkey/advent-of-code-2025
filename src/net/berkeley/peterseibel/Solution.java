@@ -54,6 +54,9 @@ public abstract class Solution<I, R> {
     return Optional.of(p).filter(Files::exists);
   }
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Utility methods for extracting data from files.
+
   protected String asString(Path p) {
     try {
       return readString(p);
@@ -62,9 +65,9 @@ public abstract class Solution<I, R> {
     }
   }
 
-  protected Stream<String> asLines(Path p) {
+  protected List<String> asLines(Path p) {
     try {
-      return lines(p);
+      return lines(p).toList();
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
@@ -78,27 +81,42 @@ public abstract class Solution<I, R> {
     return Long.valueOf(asString(p).trim());
   }
 
-  private void check(String name, int part) {
-    var input = maybeInputPath(name, part).map(this::input);
-    var expected = maybeExpectedPath(name, part).map(this::expected);
+  //////////////////////////////////////////////////////////////////////////////
+  // Actual checking code
 
-    if (input.isPresent()) {
-      try {
-        var r = result(part, input.get());
-        if (expected.isPresent()) {
-          var ok = r.equals(expected.get());
-          var emoji = ok ? "✅" : "❌";
-          var label = ok ? "pass" : "fail";
-          IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
-        } else {
-          IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, r));
-        }
-      } catch (IOException ioe) {
-        IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
-      }
-    } else {
-      IO.println("❓Day %d, part %d - No input".formatted(day, part));
+  private void check(String name, int part) {
+    maybeInputPath(name, part)
+        .map(this::input)
+        .ifPresentOrElse(in -> checkInput(in, name, part), () -> noInput(name, part));
+  }
+
+  private void checkInput(I input, String name, int part) {
+    try {
+      var result = result(part, input);
+      maybeExpectedPath(name, part)
+          .map(this::expected)
+          .ifPresentOrElse(
+              exp -> checkExpected(result, exp, name, part),
+              () -> showExpected(result, name, part));
+    } catch (IOException ioe) {
+      IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
     }
+  }
+
+  private void checkExpected(R result, R expected, String name, int part) {
+    var ok = result.equals(expected);
+    var emoji = ok ? "✅" : "❌";
+    var label = ok ? "pass" : "fail";
+    IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
+  }
+  ;
+
+  private void showExpected(R result, String name, int part) {
+    IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, result));
+  }
+
+  private void noInput(String name, int part) {
+    IO.println("❓Day %d, part %d - %s: No input".formatted(day, part, name));
   }
 
   private R result(int part, I input) throws IOException {

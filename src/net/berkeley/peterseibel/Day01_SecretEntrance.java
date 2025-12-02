@@ -6,13 +6,13 @@ import static java.nio.file.Files.*;
 
 import module java.base;
 
-public class Day01_SecretEntrance extends Solution<Stream<String>, Integer> {
+public class Day01_SecretEntrance extends Solution<List<String>, Integer> {
 
   public Day01_SecretEntrance() {
     super(1);
   }
 
-  public Integer part1(Stream<String> input) throws IOException {
+  public Integer part1(List<String> input) throws IOException {
     int p = 50;
     int count = 0;
     for (int n : nums(input)) {
@@ -22,7 +22,7 @@ public class Day01_SecretEntrance extends Solution<Stream<String>, Integer> {
     return count;
   }
 
-  public Integer part2(Stream<String> input) throws IOException {
+  public Integer part2(List<String> input) throws IOException {
     int p = 50;
     int count = 0;
     for (int n : nums(input)) {
@@ -32,8 +32,8 @@ public class Day01_SecretEntrance extends Solution<Stream<String>, Integer> {
     return count;
   }
 
-  private int[] nums(Stream<String> lines) {
-    return lines.mapToInt(this::parse).toArray();
+  private int[] nums(List<String> lines) {
+    return lines.stream().mapToInt(this::parse).toArray();
   }
 
   private int parse(String line) {
@@ -41,7 +41,7 @@ public class Day01_SecretEntrance extends Solution<Stream<String>, Integer> {
     return line.startsWith("R") ? n : -n;
   }
 
-  protected Stream<String> input(Path p) {
+  protected List<String> input(Path p) {
     return asLines(p);
   }
 
