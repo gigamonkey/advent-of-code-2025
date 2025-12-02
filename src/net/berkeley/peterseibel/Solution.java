@@ -24,41 +24,44 @@ public abstract class Solution<T, R> {
     throw new Error("NYI");
   }
 
-  public int day() {
-    return day;
-  }
-
   public abstract Optional<R> expected(String name, int part) throws IOException;
 
   public abstract Optional<T> input(String name, int part) throws IOException;
 
-  public Optional<Path> maybeInputPath(String name, int part) {
+  protected Optional<Path> maybeInputPath(String name, int part) {
     Path p = Path.of("inputs/day-%02d/%s.txt".formatted(day, name));
     return exists(p) ? Optional.of(p) : Optional.empty();
   }
 
-  public Optional<Path> maybeExpectedPath(String name, int part) {
+  protected Optional<Path> maybeExpectedPath(String name, int part) {
     Path p = Path.of("inputs/day-%02d/%s.part%d.expected".formatted(day, name, part));
     return exists(p) ? Optional.of(p) : Optional.empty();
   }
 
-  public String asString(Path p) {
+  protected String asString(Path p) {
     try {
       return readString(p);
     } catch (IOException ioe) {
-      throw new SolverException(ioe);
+      throw new RuntimeException(ioe);
     }
   }
 
-  public Integer asInteger(Path p) {
+  protected Integer asInteger(Path p) {
     return Integer.valueOf(asString(p).trim());
   }
 
-  public Long asLong(Path p) {
+  protected Long asLong(Path p) {
     return Long.valueOf(asString(p).trim());
   }
 
-  public void check(String name, int part) throws Exception {
+  public void check() throws Exception {
+    check("test", 1);
+    check("puzzle", 1);
+    check("test", 2);
+    check("puzzle", 2);
+  }
+
+  private void check(String name, int part) throws Exception {
     var input = input(name, part);
     var expected = expected(name, part);
 
@@ -83,10 +86,4 @@ public abstract class Solution<T, R> {
       : part2(input).equals(expected);
   }
 
-  public void checkAll() throws Exception {
-    check("test", 1);
-    check("puzzle", 1);
-    check("test", 2);
-    check("puzzle", 2);
-  }
 }
