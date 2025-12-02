@@ -6,9 +6,11 @@ import static java.nio.file.Files.*;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.*;
 
-public class Day01_SecretEntrance implements Solution<Path, Integer> {
+public class Day01_SecretEntrance extends Solution<Path, Integer> {
 
-  public int day() { return 1; }
+  public Day01_SecretEntrance(int day) {
+    super(day);
+  }
 
   public Integer part1(Path input) throws IOException {
     int p = 50;
