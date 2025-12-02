@@ -30,5 +30,9 @@ public class Util {
     return Integer.valueOf(asString(p).trim());
   }
 
+  public static Long asLong(Path p) {
+    return Long.valueOf(asString(p).trim());
+  }
+
 
 }
