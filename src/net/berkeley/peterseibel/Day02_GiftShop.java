@@ -33,12 +33,25 @@ public class Day02_GiftShop extends Solution<Path, Long> {
     return sum;
   }
 
+  public Long part2(Path input) throws IOException {
+    String text = Util.asString(input).trim();
+    long sum = 0;
+    for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
+      for (long n = r.start(); n <= r.end(); n++) {
+        if (isInvalid2(n)) {
+          sum += n;
+        }
+      }
+    }
+    return sum;
+  }
+
   private boolean isInvalid(long n) {
     return String.valueOf(n).matches("(.*)\\1");
   }
 
-  public Long part2(Path input) throws IOException {
-    return null;
+  private boolean isInvalid2(long n) {
+    return String.valueOf(n).matches("(.*)\\1{1,}");
   }
 
   public Optional<Path> input(String name, int part) throws IOException {
