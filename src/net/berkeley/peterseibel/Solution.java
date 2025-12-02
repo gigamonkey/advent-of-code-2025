@@ -94,6 +94,6 @@ public abstract class Solution<T, R> {
   }
 
   private boolean checkExpected(int part, T input, R expected) throws IOException {
-    return part == 1 ? part1(input).equals(expected) : part2(input).equals(expected);
+    return (part == 1 ? part1(input) : part2(input)).equals(expected);
   }
 }
