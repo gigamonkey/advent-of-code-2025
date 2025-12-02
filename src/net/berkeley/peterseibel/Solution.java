@@ -24,15 +24,25 @@ public abstract class Solution<T, R> {
 
   public int day() { return day; }
 
-  public abstract R expected(String name, int part);
+  public abstract Optional<R> expected(String name, int part) throws IOException;
 
-  public abstract T input(String name, int part);
+  public abstract Optional<T> input(String name, int part) throws IOException;
 
   public void check(String name, int part) throws Exception {
     var input = input(name, part);
     var expected = expected(name, part);
-    var ok = part == 1 ? part1(input).equals(expected) : part2(input).equals(expected);
-    IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, ok ? "pass" : "fail"));
+
+    if (input.isPresent()) {
+      if (expected.isPresent()) {
+        var ok = part == 1 ? part1(input.get()).equals(expected.get()) : part2(input.get()).equals(expected.get());
+        IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, ok ? "pass" : "fail"));
+      } else {
+        var r = part == 1 ? part1(input.get()) : part2(input.get());
+        IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, r));
+      }
+    } else {
+      IO.println("Day %d, part %d - No input".formatted(day, part));
+    }
   }
 
   public void checkAll() throws Exception {
