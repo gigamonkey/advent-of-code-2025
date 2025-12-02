@@ -59,20 +59,16 @@ public abstract class Solution<I, R> {
       var result = part == 1 ? part1(input) : part2(input);
       maybeExpected(name, part)
           .ifPresentOrElse(
-              expected -> checkExpected(result, expected, name, part),
+              expected -> showResult(result.equals(expected), name, part),
               () -> showExpected(result, name, part));
     } catch (IOException ioe) {
       IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
     }
   }
 
-  private void checkExpected(R result, R expected, String name, int part) {
-    var ok = result.equals(expected);
-    var emoji = ok ? "✅" : "❌";
-    var label = ok ? "pass" : "fail";
-    IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
+  private void showResult(boolean ok, String name, int part) {
+    IO.println("%s Day %d, part %d - %s".formatted(ok ? "✅" : "❌", day, part, name));
   }
-  ;
 
   private void showExpected(R result, String name, int part) {
     IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, result));
