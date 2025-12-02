@@ -21,24 +21,19 @@ public class Day02_GiftShop extends Solution<Path, Long> {
   }
 
   public Long part1(Path input) throws IOException {
-    String text = Util.asString(input).trim();
-    long sum = 0;
-    for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
-      for (long n = r.start(); n <= r.end(); n++) {
-        if (isInvalid(n)) {
-          sum += n;
-        }
-      }
-    }
-    return sum;
+    return sumInvalid(input, this::isInvalid);
   }
 
   public Long part2(Path input) throws IOException {
+    return sumInvalid(input, this::isInvalid2);
+  }
+
+  private Long sumInvalid(Path input, LongPredicate pred) throws IOException {
     String text = Util.asString(input).trim();
     long sum = 0;
     for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
       for (long n = r.start(); n <= r.end(); n++) {
-        if (isInvalid2(n)) {
+        if (pred.test(n)) {
           sum += n;
         }
       }
