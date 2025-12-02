@@ -6,7 +6,7 @@ import static java.nio.file.Files.*;
 
 import module java.base;
 
-public class Day02_GiftShop extends Solution<Path, Long> {
+public class Day02_GiftShop extends Solution<String, Long> {
 
   record Range(long start, long end) {
     static Range of(String s) {
@@ -19,16 +19,16 @@ public class Day02_GiftShop extends Solution<Path, Long> {
     super(2);
   }
 
-  public Long part1(Path input) {
+  public Long part1(String input) {
     return sumInvalid(input, this::isInvalid);
   }
 
-  public Long part2(Path input) {
+  public Long part2(String input) {
     return sumInvalid(input, this::isInvalid2);
   }
 
-  private Long sumInvalid(Path input, LongPredicate pred) {
-    String text = asString(input).trim();
+  private Long sumInvalid(String input, LongPredicate pred) {
+    String text = input.trim();
     long sum = 0;
     for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
       for (long n = r.start(); n <= r.end(); n++) {
@@ -48,11 +48,11 @@ public class Day02_GiftShop extends Solution<Path, Long> {
     return String.valueOf(n).matches("(.*)\\1{1,}");
   }
 
-  public Optional<Path> input(String name, int part) {
-    return maybeInputPath(name, part);
+  public String input(Path p) {
+    return asString(p);
   }
 
-  public Optional<Long> expected(String name, int part) {
-    return maybeExpectedPath(name, part).map(this::asLong);
+  public Long expected(Path p) {
+    return asLong(p);
   }
 }

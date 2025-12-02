@@ -4,7 +4,7 @@ import static java.nio.file.Files.*;
 
 import module java.base;
 
-public abstract class Solution<T, R> {
+public abstract class Solution<I, R> {
 
   private final int day;
 
@@ -15,24 +15,24 @@ public abstract class Solution<T, R> {
   /**
    * Solve part 1.
    */
-  public abstract R part1(T input) throws IOException;
+  public abstract R part1(I input) throws IOException;
 
   /**
-   * Solve part 2.
+   * Solve part 2. (Default implementation so we don't have to write it right away.)
    */
-  public R part2(T input) throws IOException {
+  public R part2(I input) throws IOException {
     throw new Error("NYI");
   }
 
   /**
-   * Get the input for test or puzzle, part 1 or 2.
+   * Get the input for test or puzzle from its Path.
    */
-  public abstract Optional<T> input(String name, int part);
+  protected abstract I input(Path p);
 
   /**
-   * Get the expected value for test or puzzle, part 1 or 2.
+   * Get the expected value for test or puzzle from its Path.
    */
-  public abstract Optional<R> expected(String name, int part);
+  protected abstract R expected(Path p);
 
   /**
    * Check all the parts.
@@ -62,6 +62,14 @@ public abstract class Solution<T, R> {
     }
   }
 
+  protected Stream<String> asLines(Path p) {
+    try {
+      return lines(p);
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+  }
+
   protected Integer asInteger(Path p) {
     return Integer.valueOf(asString(p).trim());
   }
@@ -71,18 +79,18 @@ public abstract class Solution<T, R> {
   }
 
   private void check(String name, int part) {
-    var input = input(name, part);
-    var expected = expected(name, part);
+    var input = maybeInputPath(name, part).map(this::input);
+    var expected = maybeExpectedPath(name, part).map(this::expected);
 
     if (input.isPresent()) {
       try {
+        var r = result(part, input.get());
         if (expected.isPresent()) {
-          var ok = result(part, input.get()).equals(expected.get());
+          var ok = r.equals(expected.get());
           var emoji = ok ? "✅" : "❌";
           var label = ok ? "pass" : "fail";
           IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
         } else {
-          var r = result(part, input.get());
           IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, r));
         }
       } catch (IOException ioe) {
@@ -93,7 +101,7 @@ public abstract class Solution<T, R> {
     }
   }
 
-  private R result(int part, T input) throws IOException {
+  private R result(int part, I input) throws IOException {
     return part == 1 ? part1(input) : part2(input);
   }
 }
