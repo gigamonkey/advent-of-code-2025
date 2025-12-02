@@ -1,5 +1,7 @@
 package net.berkeley.peterseibel;
 
+import static java.nio.file.Files.*;
+
 import module java.base;
 
 public abstract class Solution<T, R> {
@@ -30,24 +32,55 @@ public abstract class Solution<T, R> {
 
   public abstract Optional<T> input(String name, int part) throws IOException;
 
+  public Optional<Path> maybeInputPath(String name, int part) {
+    Path p = Path.of("inputs/day-%02d/%s.txt".formatted(day, name));
+    return exists(p) ? Optional.of(p) : Optional.empty();
+  }
+
+  public Optional<Path> maybeExpectedPath(String name, int part) {
+    Path p = Path.of("inputs/day-%02d/%s.part%d.expected".formatted(day, name, part));
+    return exists(p) ? Optional.of(p) : Optional.empty();
+  }
+
+  public String asString(Path p) {
+    try {
+      return readString(p);
+    } catch (IOException ioe) {
+      throw new SolverException(ioe);
+    }
+  }
+
+  public Integer asInteger(Path p) {
+    return Integer.valueOf(asString(p).trim());
+  }
+
+  public Long asLong(Path p) {
+    return Long.valueOf(asString(p).trim());
+  }
+
   public void check(String name, int part) throws Exception {
     var input = input(name, part);
     var expected = expected(name, part);
 
     if (input.isPresent()) {
       if (expected.isPresent()) {
-        var ok =
-            part == 1
-                ? part1(input.get()).equals(expected.get())
-                : part2(input.get()).equals(expected.get());
-        IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, ok ? "pass" : "fail"));
+        var ok = checkExpected(part, input.get(), expected.get());
+        var emoji = ok ? "✅" : "❌";
+        var label = ok ? "pass" : "fail";
+        IO.println("%s Day %d, part %d - %s: %s".formatted(emoji, day, part, name, label));
       } else {
         var r = part == 1 ? part1(input.get()) : part2(input.get());
-        IO.println("Day %d, part %d - %s: %s".formatted(day, part, name, r));
+        IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, r));
       }
     } else {
-      IO.println("Day %d, part %d - No input".formatted(day, part));
+      IO.println("❓Day %d, part %d - No input".formatted(day, part));
     }
+  }
+
+  private boolean checkExpected(int part, T input, R expected) throws Exception {
+    return part == 1
+      ? part1(input).equals(expected)
+      : part2(input).equals(expected);
   }
 
   public void checkAll() throws Exception {

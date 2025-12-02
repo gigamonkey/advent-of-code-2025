@@ -28,7 +28,7 @@ public class Day02_GiftShop extends Solution<Path, Long> {
   }
 
   private Long sumInvalid(Path input, LongPredicate pred) throws IOException {
-    String text = Util.asString(input).trim();
+    String text = asString(input).trim();
     long sum = 0;
     for (Range r : Arrays.stream(text.split(",")).map(Range::of).toList()) {
       for (long n = r.start(); n <= r.end(); n++) {
@@ -49,10 +49,10 @@ public class Day02_GiftShop extends Solution<Path, Long> {
   }
 
   public Optional<Path> input(String name, int part) throws IOException {
-    return Util.maybeInputPath(name, day(), part);
+    return maybeInputPath(name, part);
   }
 
   public Optional<Long> expected(String name, int part) throws IOException {
-    return Util.maybeExpectedPath(name, day(), part).map(Util::asLong);
+    return maybeExpectedPath(name, part).map(this::asLong);
   }
 }
