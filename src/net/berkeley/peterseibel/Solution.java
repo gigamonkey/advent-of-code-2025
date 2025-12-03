@@ -1,5 +1,7 @@
 package net.berkeley.peterseibel;
 
+import static java.lang.System.nanoTime;
+
 import module java.base;
 
 public abstract class Solution<I, R> {
@@ -56,22 +58,26 @@ public abstract class Solution<I, R> {
 
   private void checkInput(I input, String name, int part) {
     try {
+      var start = nanoTime();
       var result = part == 1 ? part1(input) : part2(input);
+      var elapsed = Math.round((nanoTime() - start) / 1e6);
+      var time = "(%d ms)".formatted(elapsed);
+
       maybeExpected(name, part)
           .ifPresentOrElse(
-              expected -> showResult(result.equals(expected), name, part),
-              () -> showExpected(result, name, part));
+              expected -> showResult(result.equals(expected), name, part, time),
+              () -> showExpected(result, name, part, time));
     } catch (IOException ioe) {
       IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
     }
   }
 
-  private void showResult(boolean ok, String name, int part) {
-    IO.println("%s Day %d, part %d - %s".formatted(ok ? "✅" : "❌", day, part, name));
+  private void showResult(boolean ok, String name, int part, String time) {
+    IO.println("%s Day %d, part %d - %s %s".formatted(ok ? "✅" : "❌", day, part, name, time));
   }
 
-  private void showExpected(R result, String name, int part) {
-    IO.println("🟡 Day %d, part %d - %s: %s".formatted(day, part, name, result));
+  private void showExpected(R result, String name, int part, String time) {
+    IO.println("🟡 Day %d, part %d - %s %s: %s".formatted(day, part, name, time, result));
   }
 
   private void noInput(String name, int part) {
