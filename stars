@@ -1,0 +1,39 @@
+#!/usr/bin/env node
+
+import data from './board.json' with { type: 'json' };
+import { Temporal } from '@js-temporal/polyfill';
+
+const start = Temporal.PlainDate.from('2025-12-01').toZonedDateTime('America/New_York');
+
+const { values, entries } = Object;
+
+const dumpStars = (completions, name) => {
+  return entries(completions).flatMap(([day, parts]) => {
+    return dumpParts(parts, day, name);
+  });
+};
+
+const dumpParts = (parts, day, name) => {
+  return entries(parts).map(([part, {get_star_ts, star_index }]) => {
+    return { name, day, part, order: star_index, timestamp: get_star_ts};
+  });
+}
+
+
+const stars = values(data.members).flatMap(m => {
+  const { name, completion_day_level } = m;
+  return dumpStars(completion_day_level, name);
+});
+
+const duration = (duration, minUnit = 'second') => {
+  const d = duration.round({largestUnit: 'hour', smallestUnit: 'second', roundingMode: 'floor'});
+  return `${d.hours.toString().padStart(2, ' ')}:${d.minutes.toString().padStart(2, '0')}:${d.seconds.toString().padStart(2, '0')}`;
+}
+
+stars.sort((a, b) => a.order - b.order);
+
+for (const s of stars) {
+  const dayStart = start.add({days: s.day - 1});
+  const elapsed = Temporal.Instant.fromEpochMilliseconds(s.timestamp * 1e3).since(dayStart.toInstant());
+  console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${duration(elapsed)}`);
+}

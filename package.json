@@ -1,0 +1,23 @@
+{
+  "name": "advent-of-code-2025",
+  "version": "1.0.0",
+  "description": "Solutions to 2025 Advent of Code puzzles.",
+  "homepage": "https://github.com/gigamonkey/advent-of-code-2025#readme",
+  "bugs": {
+    "url": "https://github.com/gigamonkey/advent-of-code-2025/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gigamonkey/advent-of-code-2025.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "foo.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1"
+  }
+}
