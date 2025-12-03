@@ -61,7 +61,7 @@ public abstract class Solution<I, R> {
     try {
       var start = nanoTime();
       var result = part == 1 ? part1(input) : part2(input);
-      var time = "(%d ms)".formatted(round((nanoTime() - start) / 1e6));
+      var time = " (%d ms)".formatted(round((nanoTime() - start) / 1e6));
 
       maybeExpected(name, part)
           .ifPresentOrElse(
