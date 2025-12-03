@@ -16,9 +16,8 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> banks) {
-    return banks.stream().mapToLong(this::maxJoltage12).sum();
+    return banks.stream().mapToLong(this::maxJoltageFaster).sum();
   }
-
 
   private long maxJoltage2(String bank) {
     int[] batteries = Arrays.stream(bank.split("")).mapToInt(Integer::parseInt).toArray();
@@ -30,10 +29,10 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
     return maxJoltage(batteries, 0, 0, 12);
   }
 
-
+  // Biggest digit less than n from the end.
+  //
 
   private long maxJoltage(int[] batteries, long acc, int start, int n) {
-    //IO.println("maxJoltage: acc: %d; start: %d; n: %d".formatted(acc, start, n));
     if (n == 0) {
       return acc;
     }
@@ -48,5 +47,31 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
     return max(a, b);
   }
 
+  private long maxJoltageFaster(String bank) {
+    int[] batteries = Arrays.stream(bank.split("")).mapToInt(Integer::parseInt).toArray();
+    int start = 0;
+    int n = 12;
+    long j = 0L;
+    while (n > 0) {
+      int i = maxDigitIndex(batteries, start, n);
+      j = j * 10 + batteries[i];
+      start = i + 1;
+      n--;
+    }
+    return j;
+  }
+
+  private int maxDigitIndex(int[] batteries, int start, int n) {
+    int maxD = batteries[start];
+    int maxI = start;
+    for (int i = maxI; i <= batteries.length - n; i++) {
+      if (batteries[i] > maxD) {
+        maxD = batteries[i];
+        maxI = i;
+      }
+      if (maxD == 9) break;
+    }
+    return maxI;
+  }
 
 }
