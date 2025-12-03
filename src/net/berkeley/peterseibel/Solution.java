@@ -42,19 +42,21 @@ public abstract class Solution<I, R> {
   //////////////////////////////////////////////////////////////////////////////
   // Actual checking code
 
-  private Optional<I> maybeInput(String name, int part) {
-    Path p = Path.of("inputs/day-%02d/%s.txt".formatted(day, name));
-    return Optional.of(p).filter(Files::exists).map(inputParser);
-  }
-
-  private Optional<R> maybeExpected(String name, int part) {
-    Path p = Path.of("inputs/day-%02d/%s.part%d.expected".formatted(day, name, part));
-    return Optional.of(p).filter(Files::exists).map(expectedParser);
-  }
-
   private void check(String name, int part) {
     maybeInput(name, part)
         .ifPresentOrElse(input -> checkInput(input, name, part), () -> noInput(name, part));
+  }
+
+  private Optional<Path> maybePath(String name) {
+    return Optional.of(Path.of("inputs/day-%02d/%s".formatted(day, name))).filter(Files::exists);
+  }
+
+  private Optional<I> maybeInput(String name, int part) {
+    return maybePath("%s.txt".formatted(name)).map(inputParser);
+  }
+
+  private Optional<R> maybeExpected(String name, int part) {
+    return maybePath("%s.part%d.expected".formatted(name, part)).map(expectedParser);
   }
 
   private void checkInput(I input, String name, int part) {
@@ -65,7 +67,7 @@ public abstract class Solution<I, R> {
 
       maybeExpected(name, part)
           .ifPresentOrElse(
-              expected -> showResult(result.equals(expected), name, part, time),
+              e -> showResult(result.equals(e), name, part, time),
               () -> showExpected(result, name, part, time));
 
     } catch (IOException ioe) {
