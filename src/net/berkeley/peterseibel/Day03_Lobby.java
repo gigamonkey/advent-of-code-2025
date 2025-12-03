@@ -5,28 +5,48 @@ import static java.lang.Math.*;
 
 import module java.base;
 
-public class Day03_Lobby extends Solution<List<String>, Integer> {
+public class Day03_Lobby extends Solution<List<String>, Long> {
 
   public Day03_Lobby() {
-    super(3, Data::asLines, Data::asInteger);
+    super(3, Data::asLines, Data::asLong);
   }
 
-  public Integer part1(List<String> banks) {
-    return banks.stream().mapToInt(this::maxJoltage).sum();
+  public Long part1(List<String> banks) {
+    return banks.stream().mapToLong(this::maxJoltage2).sum();
   }
 
-  public Long part2(String input) {
+  public Long part2(List<String> banks) {
+    return banks.stream().mapToLong(this::maxJoltage12).sum();
   }
 
 
-  private int maxJoltage(String bank) {
+  private long maxJoltage2(String bank) {
     int[] batteries = Arrays.stream(bank.split("")).mapToInt(Integer::parseInt).toArray();
-    int max = 0;
-    for (int i = 0; i < batteries.length - 1; i++) {
-      for (int j = i + 1; j < batteries.length; j++) {
-        max = max(max, batteries[i] * 10 + batteries[j]);
-      }
-    }
-    return max;
+    return maxJoltage(batteries, 0, 0, 2);
   }
+
+  private long maxJoltage12(String bank) {
+    int[] batteries = Arrays.stream(bank.split("")).mapToInt(Integer::parseInt).toArray();
+    return maxJoltage(batteries, 0, 0, 12);
+  }
+
+
+
+  private long maxJoltage(int[] batteries, long acc, int start, int n) {
+    //IO.println("maxJoltage: acc: %d; start: %d; n: %d".formatted(acc, start, n));
+    if (n == 0) {
+      return acc;
+    }
+
+    if (start == batteries.length) {
+      return -1;
+    }
+
+    long a = maxJoltage(batteries, acc * 10 + batteries[start], start + 1, n - 1);
+    long b = maxJoltage(batteries, acc, start + 1, n);
+
+    return max(a, b);
+  }
+
+
 }
