@@ -1,39 +1,78 @@
 #!/usr/bin/env node
 
-import data from './board.json' with { type: 'json' };
+import board from './board.json' with { type: 'json' };
 import { Temporal } from '@js-temporal/polyfill';
-
-const start = Temporal.PlainDate.from('2025-12-01').toZonedDateTime('America/New_York');
+import { Command } from 'commander';
 
 const { values, entries } = Object;
 
-const dumpStars = (completions, name) => {
-  return entries(completions).flatMap(([day, parts]) => {
-    return dumpParts(parts, day, name);
+const start = Temporal.PlainDate.from('2025-12-01').toZonedDateTime('America/New_York');
+
+const instant = (seconds) => Temporal.Instant.fromEpochMilliseconds(seconds * 1e3);
+
+const midnight = (day) => start.add({days: day - 1}).toInstant();
+
+const stars = (data) => {
+  const ss = values(data.members).flatMap(m => {
+    const { name, completion_day_level } = m;
+    return perPerson(completion_day_level, name);
   });
+  return ss.sort((a, b) => a.order - b.order);
 };
 
-const dumpParts = (parts, day, name) => {
-  return entries(parts).map(([part, {get_star_ts, star_index }]) => {
-    return { name, day, part, order: star_index, timestamp: get_star_ts};
+const perPerson = (completions, name) => {
+  return entries(completions).flatMap(([day, parts]) => perDay(parts, Number(day), name));
+};
+
+const perDay = (parts, day, name) => {
+  return entries(parts).map(([part, {get_star_ts: timestamp, star_index: order }]) => {
+    return { name, day, part: Number(part), order, timestamp };
   });
 }
-
-
-const stars = values(data.members).flatMap(m => {
-  const { name, completion_day_level } = m;
-  return dumpStars(completion_day_level, name);
-});
 
 const duration = (duration, minUnit = 'second') => {
   const d = duration.round({largestUnit: 'hour', smallestUnit: 'second', roundingMode: 'floor'});
-  return `${d.hours.toString().padStart(2, ' ')}:${d.minutes.toString().padStart(2, '0')}:${d.seconds.toString().padStart(2, '0')}`;
+  return `${xx(d.hours, ' ')}:${xx(d.minutes)}:${xx(d.seconds)}`;
 }
 
-stars.sort((a, b) => a.order - b.order);
+const xx = (n, p='0') => n.toString().padStart(2, p);
 
-for (const s of stars) {
-  const dayStart = start.add({days: s.day - 1});
-  const elapsed = Temporal.Instant.fromEpochMilliseconds(s.timestamp * 1e3).since(dayStart.toInstant());
-  console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${duration(elapsed)}`);
-}
+const filterByOpts = (opts) => {
+  if ('firsts' in opts) {
+    const seen = new Set();
+    return (s) => {
+      const k = `d${s.day}p${s.part}`;
+      if (!seen.has(k)) {
+        seen.add(k);
+        return true;
+      } else {
+        return false;
+      }
+    };
+  } else {
+    const namePat = opts.name ? new RegExp(opts.name) : /./;
+    return (s) => {
+      if (opts.day && s.day !== opts.day) return false;
+      if (opts.part && s.part !== opts.part) return false;
+      if (!namePat.test(s.name)) return false;
+      return true;
+    };
+  }
+};
+
+const main = (opts) => {
+  const ss = stars(board).filter(filterByOpts(opts));
+  for (const s of ss) {
+    const elapsed = instant(s.timestamp).since(midnight(s.day));
+    console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${duration(elapsed)}`);
+  }
+};
+
+new Command()
+  .description('Stats about stars')
+  .option('-f, --firsts', 'Only first for each star')
+  .option('-d, --day <day>', 'Limit to day', Number)
+  .option('-p, --part <part>', 'Limit to part', Number)
+  .option('-n, --name <name>', 'Limit to user')
+  .action(main)
+  .parse();
