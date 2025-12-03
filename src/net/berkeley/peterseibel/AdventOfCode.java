@@ -12,10 +12,7 @@ public class AdventOfCode {
   private static final int TODAY = (int) DAYS.between(START, ZonedDateTime.now(TZ)) + 1;
 
   private static final List<Solution<?, ?>> SOLUTIONS =
-      List.of(
-        new Day01_SecretEntrance(),
-        new Day02_GiftShop(),
-        new Day03_Lobby());
+      List.of(new Day01_SecretEntrance(), new Day02_GiftShop(), new Day03_Lobby());
 
   private static Optional<Solution<?, ?>> solutionFor(int day) {
     if ((day - 1) < SOLUTIONS.size()) {
