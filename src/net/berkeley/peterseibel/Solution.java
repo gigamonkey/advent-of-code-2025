@@ -67,20 +67,25 @@ public abstract class Solution<I, R> {
           .ifPresentOrElse(
               expected -> showResult(result.equals(expected), name, part, time),
               () -> showExpected(result, name, part, time));
+
     } catch (IOException ioe) {
-      IO.println("❌ Day %d, part %d - %s: Exception %s".formatted(day, part, name, ioe));
+      log("💣", name, part, ": %s".formatted(ioe));
     }
   }
 
   private void showResult(boolean ok, String name, int part, String time) {
-    IO.println("%s Day %d, part %d - %s %s".formatted(ok ? "✅" : "❌", day, part, name, time));
+    log(ok ? "✅" : "❌", name, part, time);
   }
 
   private void showExpected(R result, String name, int part, String time) {
-    IO.println("🟡 Day %d, part %d - %s %s: %s".formatted(day, part, name, time, result));
+    log("🟡", name, part, "%s%s".formatted(time, result));
   }
 
   private void noInput(String name, int part) {
-    IO.println("❓Day %d, part %d - %s: No input".formatted(day, part, name));
+    log("❓", name, part, ": No input");
+  }
+
+  private void log(String emoji, String name, int part, String detail) {
+    IO.println("%s Day %d, part %d - %s%s".formatted(emoji, day, part, name, detail));
   }
 }
