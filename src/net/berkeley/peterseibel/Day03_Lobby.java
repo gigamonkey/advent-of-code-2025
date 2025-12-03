@@ -11,11 +11,15 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> banks) {
-    return banks.stream().map(this::batteries).mapToLong(b -> maxJoltage(b, 2)).sum();
+    return sumJoltages(banks, 2);
   }
 
   public Long part2(List<String> banks) {
-    return banks.stream().map(this::batteries).mapToLong(b -> maxJoltage(b, 12)).sum();
+    return sumJoltages(banks, 12);
+  }
+
+  private long sumJoltages(List<String> banks, int n) {
+    return banks.stream().map(this::batteries).mapToLong(b -> maxJoltage(b, n)).sum();
   }
 
   private int[] batteries(String bank) {
@@ -27,7 +31,8 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
     int start = 0;
     while (n > 0) {
       int i = maxDigitIndex(batteries, start, n);
-      j = j * 10 + batteries[i];
+      j *= 10;
+      j += batteries[i];
       start = i + 1;
       n--;
     }
@@ -35,15 +40,15 @@ public class Day03_Lobby extends Solution<List<String>, Long> {
   }
 
   private int maxDigitIndex(int[] batteries, int start, int n) {
-    int maxD = batteries[start];
-    int maxI = start;
-    for (int i = maxI; i <= batteries.length - n; i++) {
-      if (batteries[i] > maxD) {
-        maxD = batteries[i];
-        maxI = i;
+    int maxDigit = batteries[start];
+    int maxIndex = start;
+    for (int i = maxIndex; i <= batteries.length - n; i++) {
+      if (batteries[i] > maxDigit) {
+        maxDigit = batteries[i];
+        maxIndex = i;
       }
-      if (maxD == 9) break;
+      if (maxDigit == 9) break;
     }
-    return maxI;
+    return maxIndex;
   }
 }
