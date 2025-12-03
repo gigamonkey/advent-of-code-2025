@@ -1,5 +1,6 @@
 package net.berkeley.peterseibel;
 
+import static java.lang.Math.round;
 import static java.lang.System.nanoTime;
 
 import module java.base;
@@ -60,8 +61,7 @@ public abstract class Solution<I, R> {
     try {
       var start = nanoTime();
       var result = part == 1 ? part1(input) : part2(input);
-      var elapsed = Math.round((nanoTime() - start) / 1e6);
-      var time = "(%d ms)".formatted(elapsed);
+      var time = "(%d ms)".formatted(round((nanoTime() - start) / 1e6));
 
       maybeExpected(name, part)
           .ifPresentOrElse(
