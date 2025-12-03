@@ -9,9 +9,7 @@ public class AdventOfCode {
 
   private static final ZoneId TZ = ZoneId.of("America/New_York");
   private static final ZonedDateTime START = ZonedDateTime.of(2025, 12, 1, 0, 0, 0, 0, TZ);
-  private static final ZonedDateTime NOW = ZonedDateTime.now(TZ);
-
-  private static final int MAX_DAY = (int) DAYS.between(START, NOW) + 1;
+  private static final int TODAY = (int) DAYS.between(START, ZonedDateTime.now(TZ)) + 1;
 
   private static final List<Solution<?, ?>> SOLUTIONS =
       List.of(new Day01_SecretEntrance(), new Day02_GiftShop());
@@ -32,7 +30,7 @@ public class AdventOfCode {
     if (args.length > 0 && args[0].equals("--all")) {
       SOLUTIONS.forEach(Solution::check);
     } else {
-      int day = args.length > 0 ? parseInt(args[0]) : MAX_DAY;
+      int day = args.length > 0 ? parseInt(args[0]) : TODAY;
       solutionFor(day).ifPresentOrElse(Solution::check, () -> noCode(day));
     }
   }
