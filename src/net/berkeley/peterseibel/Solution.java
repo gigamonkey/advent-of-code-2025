@@ -67,16 +67,20 @@ public abstract class Solution<I, R> {
 
       maybeExpected(name, part)
           .ifPresentOrElse(
-              e -> showResult(result.equals(e), name, part, time),
-              () -> showExpected(result, name, part, time));
+            e -> showResult(result.equals(e), name, part, time, result),
+            () -> showExpected(result, name, part, time));
 
     } catch (IOException ioe) {
       log("💣", name, part, ": %s".formatted(ioe));
     }
   }
 
-  private void showResult(boolean ok, String name, int part, String time) {
-    log(ok ? "✅" : "❌", name, part, time);
+  private void showResult(boolean ok, String name, int part, String time, R result) {
+    if (ok) {
+      log("✅", name, part, time);
+    } else {
+      log("❌", name, part, "%s: %s".formatted(time, result));
+    }
   }
 
   private void showExpected(R result, String name, int part, String time) {

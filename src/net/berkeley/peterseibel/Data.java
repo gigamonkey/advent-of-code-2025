@@ -22,6 +22,14 @@ class Data {
     }
   }
 
+  public static String[][] asCharacterGrid(Path p) {
+    try {
+      return lines(p).map(s -> s.split("")).toArray(String[][]::new);
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+  }
+
   public static Integer asInteger(Path p) {
     return Integer.valueOf(asString(p).trim());
   }
