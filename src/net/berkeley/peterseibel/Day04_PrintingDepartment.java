@@ -22,6 +22,32 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     return count;
   }
 
+  public Long part2(String[][] grid) {
+    long total = 0L;
+    long removed = remove(grid);
+    while (removed > 0) {
+      total += removed;
+      removed = remove(grid);
+    }
+    return total;
+  }
+
+
+  private long remove(String[][] grid) {
+    long count = 0L;
+    for (int r = 0; r < grid.length; r++) {
+      for (int c = 0; c < grid[r].length; c++) {
+        if (grid[r][c].equals("@") && neighboringRolls(grid, r, c) < 4) {
+          grid[r][c] = ".";
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+
+
   private boolean inBounds(String[][] grid, int r, int c) {
     return 0 <= r && r < grid.length && 0 <= c && c < grid[r].length;
   }
@@ -40,7 +66,4 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     return count;
   }
 
-  public Long part2(String[][] grid) {
-    return 0L;
-  }
 }
