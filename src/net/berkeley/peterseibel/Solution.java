@@ -67,8 +67,8 @@ public abstract class Solution<I, R> {
 
       maybeExpected(name, part)
           .ifPresentOrElse(
-            e -> showResult(result.equals(e), name, part, time, result),
-            () -> showExpected(result, name, part, time));
+              e -> showResult(result.equals(e), name, part, time, result),
+              () -> showExpected(result, name, part, time));
 
     } catch (IOException ioe) {
       log("💣", name, part, ": %s".formatted(ioe));

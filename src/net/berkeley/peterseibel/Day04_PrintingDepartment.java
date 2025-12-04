@@ -32,7 +32,6 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     return total;
   }
 
-
   private long remove(String[][] grid) {
     long count = 0L;
     for (int r = 0; r < grid.length; r++) {
@@ -45,8 +44,6 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     }
     return count;
   }
-
-
 
   private boolean inBounds(String[][] grid, int r, int c) {
     return 0 <= r && r < grid.length && 0 <= c && c < grid[r].length;
@@ -65,5 +62,4 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     }
     return count;
   }
-
 }
