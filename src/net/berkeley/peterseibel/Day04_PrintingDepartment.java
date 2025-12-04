@@ -24,11 +24,11 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
 
   public Long part2(String[][] grid) {
     long total = 0L;
-    long removed = remove(grid);
-    while (removed > 0) {
-      total += removed;
+    long removed;
+    do {
       removed = remove(grid);
-    }
+      total += removed;
+    } while (removed > 0);
     return total;
   }
 
