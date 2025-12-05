@@ -23,8 +23,6 @@ public class Day05_Cafeteria extends Solution<List<String>, Long> {
       return end - start + 1;
     }
 
-    // 1-100, 5-100, 11-20, 11-50,
-
     public boolean overlaps(Range other) {
       return (
         (end >= other.start && end <= other.end) ||
@@ -65,44 +63,28 @@ public class Day05_Cafeteria extends Solution<List<String>, Long> {
       fresh.add(new Range(low, high));
     }
 
-    IO.println("Found %d ranges".formatted(fresh.size()));
-    fresh.stream().forEach(IO::println);
-
     fresh.sort(null);
 
-    IO.println("Still have %d ranges".formatted(fresh.size()));
-    fresh.stream().forEach(IO::println);
-
     long count = 0L;
-
-    // 1-100, 5-50, 11-20, 11-50,
 
     Range b = fresh.removeLast();
     while (!fresh.isEmpty()) {
       Range a = fresh.removeLast();
       if (a.overlaps(b)) {
-        IO.println("Combining %s and %s".formatted(a, b));
         b = a.combineOverlapping(b);
-        IO.println("Got %s".formatted(b));
       } else {
-        IO.println("Not ovelapping %s and %s".formatted(a, b));
         count += b.size();
         if (count < 0) throw new Error("count: " + count);
-        IO.println("Adding %d from %s. Count now %d".formatted(b.size(), b, count));
-        //IO.println(count);
         b = a;
       }
     }
     count += b.size();
-    //IO.println(count);
-    IO.println("Adding %d from %s. Count now %d".formatted(b.size(), b, count));
     return count;
   }
 
   private long countFresh(List<String> lines) {
 
     List<Range> fresh = new ArrayList<>();
-    //List<Long> available = new ArrayList<>();
 
     long count = 0;
 
