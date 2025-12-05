@@ -1,6 +1,5 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
@@ -24,7 +23,7 @@ public class Day05_Cafeteria extends Solution<List<String>, Long> {
             i.fresh.add(Range.valueOf(line));
           }
         } else {
-          i.available.add(parseLong(line));
+          i.available.add(Long.valueOf(line));
         }
       }
       return i;
