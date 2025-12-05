@@ -1,18 +1,10 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 
 import module java.base;
 
 public class Day02_GiftShop extends Solution<String, Long> {
-
-  record Range(long start, long end) {
-    static Range valueOf(String s) {
-      String[] parts = s.split("-");
-      return new Range(parseLong(parts[0]), parseLong(parts[1]));
-    }
-  }
 
   public Day02_GiftShop() {
     super(2, Data::asString, Data::asLong);

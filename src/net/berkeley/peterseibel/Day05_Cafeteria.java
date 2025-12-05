@@ -3,50 +3,39 @@ package net.berkeley.peterseibel;
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
 
-// Part 2 wrong:
-// 371077840399614
-
 import module java.base;
 
 public class Day05_Cafeteria extends Solution<List<String>, Long> {
 
-  record Ingredients(Set<Long> fresh, List<Long> available) {}
-
-  record Range(long start, long end) implements Comparable<Range> {
-
-    public boolean contains(long n) {
-      return start <= n && n <= end;
-    }
-
-    public long size() {
-      assert end >= start: "In order";
-      return end - start + 1;
-    }
-
-    public boolean overlaps(Range other) {
-      return (
-        (end >= other.start && end <= other.end) ||
-        (start >= other.start && start <= other.end) ||
-        (start <= other.start && end >= other.end) ||
-        (start >= other.start && end <= other.end));
-    }
-
-    public Range combineOverlapping(Range other) {
-      return new Range(min(start, other.start), max(end, other.end));
-    }
-
-    public int compareTo(Range other) {
-      return comparingLong(Range::start).thenComparing(comparingLong(Range::size)).compare(this, other);
-    }
-
-  }
+  record Ingredients(List<Range> fresh, List<Long> available) {}
 
   public Day05_Cafeteria() {
     super(5, Data::asLines, Data::asLong);
   }
 
   public Long part1(List<String> lines) {
-    return countFresh(lines);
+    List<Range> fresh = new ArrayList<>();
+
+    long count = 0;
+
+    boolean inFresh = true;
+
+    for (String line : lines) {
+      if (inFresh) {
+        if (line.trim().isEmpty()) {
+          inFresh = false;
+        } else {
+          String[] parts = line.split("-");
+          fresh.add(new Range(Long.parseLong(parts[0]), Long.parseLong(parts[1])));
+        }
+      } else {
+        long n = Long.parseLong(line);
+        if (fresh.stream().anyMatch(r -> r.contains(n))) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   public Long part2(List<String> lines) {
@@ -82,30 +71,26 @@ public class Day05_Cafeteria extends Solution<List<String>, Long> {
     return count;
   }
 
-  private long countFresh(List<String> lines) {
+  // private Ingredients ingredients(List<String> lines) {
+  //   List<Range> fresh = new ArrayList<>();
 
-    List<Range> fresh = new ArrayList<>();
+  //   boolean inFresh = true;
 
-    long count = 0;
-
-    boolean inFresh = true;
-
-    for (String line : lines) {
-      if (inFresh) {
-        if (line.trim().isEmpty()) {
-          inFresh = false;
-        } else {
-          String[] parts = line.split("-");
-          fresh.add(new Range(Long.parseLong(parts[0]), Long.parseLong(parts[1])));
-        }
-      } else {
-        long n = Long.parseLong(line);
-        if (fresh.stream().anyMatch(r -> r.contains(n))) {
-          count++;
-        }
-      }
-    }
-    return count;
-  }
+  //   for (String line : lines) {
+  //     if (inFresh) {
+  //       if (line.trim().isEmpty()) {
+  //         inFresh = false;
+  //       } else {
+  //         String[] parts = line.split("-");
+  //         fresh.add(new Range(Long.parseLong(parts[0]), Long.parseLong(parts[1])));
+  //       }
+  //     } else {
+  //       long n = Long.parseLong(line);
+  //       if (fresh.stream().anyMatch(r -> r.contains(n))) {
+  //         count++;
+  //       }
+  //     }
+  //   }
+  //   return count;
 
 }
