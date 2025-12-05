@@ -32,6 +32,11 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
     return total;
   }
 
+  // This is more aggresive than described in the problem as it may remove rolls
+  // in a pass due to their neighbors being cleared in the same pass. But it
+  // doesn't seem to matter since they would get cleared in the next pass
+  // anyway. But that means we can't use this or part1 because it removes more
+  // than one pass's worth and thus the count is wrong.
   private long remove(String[][] grid) {
     long count = 0L;
     for (int r = 0; r < grid.length; r++) {
@@ -51,10 +56,10 @@ public class Day04_PrintingDepartment extends Solution<String[][], Long> {
 
   private int neighboringRolls(String[][] grid, int row, int col) {
     int count = 0;
-    for (int r = -1; r <= 1; r++) {
-      for (int c = -1; c <= 1; c++) {
-        if (r != 0 || c != 0) {
-          if (inBounds(grid, row + r, col + c) && grid[row + r][col + c].equals("@")) {
+    for (int r = row - 1; r <= row + 1; r++) {
+      for (int c = col - 1; c <= col + 1; c++) {
+        if (r != row || c != col) {
+          if (inBounds(grid, r, c) && grid[r][c].equals("@")) {
             count++;
           }
         }
