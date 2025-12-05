@@ -53,16 +53,16 @@ public class Day05_Cafeteria extends Solution<List<String>, Long> {
 
     var fresh = Ingredients.from(lines).sorted();
 
-    Range b = fresh.removeLast();
+    Range curr = fresh.removeLast();
     while (!fresh.isEmpty()) {
-      Range a = fresh.removeLast();
-      if (a.overlaps(b)) {
-        b = a.merge(b);
+      Range next = fresh.removeLast();
+      if (curr.overlaps(next)) {
+        curr = curr.merge(next);
       } else {
-        count += b.size();
-        b = a;
+        count += curr.size();
+        curr = next;
       }
     }
-    return count + b.size();
+    return count + curr.size();
   }
 }
