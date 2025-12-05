@@ -70,6 +70,7 @@ const filterByOpts = (opts) => {
 
 const main = (opts) => {
   const ss = stars(board).filter(filterByOpts(opts));
+  const maxNameWidth = ss.map(s => s.name.length).reduce((acc, n) => Math.max(acc, n), 0);
   for (const s of ss) {
     const elapsed = instant(s.timestamp).since(midnight(s.day));
     if (opts.csv) {
@@ -77,7 +78,7 @@ const main = (opts) => {
     } else if (opts.tsv) {
       console.log([s.day, s.part, s.name, s.rank, duration(elapsed)].join('\t'))
     } else {
-      console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${s.rank.toString().padStart(3, ' ')} ${duration(elapsed)}`);
+      console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(maxNameWidth, ' ')} ${s.rank.toString().padStart(2, ' ')} ${duration(elapsed)}`);
     }
   }
 };
