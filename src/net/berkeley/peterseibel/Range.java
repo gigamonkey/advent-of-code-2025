@@ -28,7 +28,8 @@ public record Range(long start, long end) implements Comparable<Range> {
     return !(end < other.start || start > other.end);
   }
 
-  public Range combineOverlapping(Range other) {
+  public Range merge(Range other) {
+    assert overlaps(other) : "Can only merge overlapping ranges";
     return new Range(min(start, other.start), max(end, other.end));
   }
 
