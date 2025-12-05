@@ -17,7 +17,12 @@ const stars = (data) => {
     const { name, completion_day_level } = m;
     return perPerson(completion_day_level, name);
   });
-  return ss.sort((a, b) => a.order - b.order);
+  const counts = {};
+  return ss.sort((a, b) => a.order - b.order).map(s => {
+    const k = key(s);
+    const rank = !(k in counts) ? counts[k] = 1 : ++counts[k];
+    return { ...s, rank };
+  });
 };
 
 const perPerson = (completions, name) => {
@@ -37,11 +42,14 @@ const duration = (duration, minUnit = 'second') => {
 
 const xx = (n, p='0') => n.toString().padStart(2, p);
 
+const key = (s) => `d${s.day}p${s.part}`;
+
+
 const filterByOpts = (opts) => {
   if ('firsts' in opts) {
     const seen = new Set();
     return (s) => {
-      const k = `d${s.day}p${s.part}`;
+      const k = key(s);
       if (!seen.has(k)) {
         seen.add(k);
         return true;
@@ -64,7 +72,13 @@ const main = (opts) => {
   const ss = stars(board).filter(filterByOpts(opts));
   for (const s of ss) {
     const elapsed = instant(s.timestamp).since(midnight(s.day));
-    console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${duration(elapsed)}`);
+    if (opts.csv) {
+      console.log([s.day, s.part, s.name, s.rank, duration(elapsed)].join(','))
+    } else if (opts.tsv) {
+      console.log([s.day, s.part, s.name, s.rank, duration(elapsed)].join('\t'))
+    } else {
+      console.log(`Day ${s.day}, part ${s.part} ${s.name.padEnd(20, ' ')} ${s.rank.toString().padStart(3, ' ')} ${duration(elapsed)}`);
+    }
   }
 };
 
@@ -74,5 +88,7 @@ new Command()
   .option('-d, --day <day>', 'Limit to day', Number)
   .option('-p, --part <part>', 'Limit to part', Number)
   .option('-n, --name <name>', 'Limit to user')
+  .option('-c, --csv', 'Emit csv')
+  .option('-t, --tsv', 'Emit tsv')
   .action(main)
   .parse();
