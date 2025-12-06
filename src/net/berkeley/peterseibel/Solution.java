@@ -52,7 +52,7 @@ public abstract class Solution<I, R> {
   }
 
   private Optional<I> maybeInput(String name, int part) {
-    return maybePath("%s.txt".formatted(name)).map(inputParser);
+    return maybePath("%s.data".formatted(name)).map(inputParser);
   }
 
   private Optional<R> maybeExpected(String name, int part) {
