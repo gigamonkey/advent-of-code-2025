@@ -56,25 +56,11 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   private long humanColumnValue(Column spec, List<String> numberRows) {
-    var column = numberRows.stream().map(spec::extract).toList();
-    var nums = extractHumanNumbers(column, spec);
-
-    if (spec.symbol() == '+') {
-      return nums.stream().mapToLong(n -> n).sum();
-    } else {
-      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
-    }
+    return columnValue(spec, numberRows, this::extractHumanNumbers);
   }
 
   private long squidColumnValue(Column spec, List<String> numberRows) {
-    var column = numberRows.stream().map(spec::extract).toList();
-    var nums = extractSquidNumbers(column, spec);
-
-    if (spec.symbol() == '+') {
-      return nums.stream().mapToLong(n -> n).sum();
-    } else {
-      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
-    }
+    return columnValue(spec, numberRows, this::extractSquidNumbers);
   }
 
   private long columnValue(Column spec, List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
