@@ -5,14 +5,20 @@ set -euo pipefail
 day=$1
 name=$2
 
-class=$(printf "Day%02d_%s" $day $name)
 
+inputs=$(printf "inputs/day-%02d/" $day)
+class=$(printf "Day%02d_%s" $day $name)
 file="src/net/berkeley/peterseibel/$class.java"
 
 if [[ -e "$file" ]]; then
     echo "File already exists!"
     exit 1
 fi
+
+echo "Making inputs dir $inputs"
+mkdir -p "$inputs"
+touch "$inputs/test.txt"
+touch "$inputs/test.part1.expected"
 
 echo "Saving to $file"
 
