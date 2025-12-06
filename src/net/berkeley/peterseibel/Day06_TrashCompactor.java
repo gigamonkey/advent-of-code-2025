@@ -30,85 +30,65 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    return squidGrid(lines);
-  }
 
-  private String[][] simpleGrid(List<String> lines) {
-    return lines.stream().map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
-  }
-
-  private long squidGrid(List<String> lines) {
-    // To find width of columns.
-    List<String> all = new ArrayList<>(lines.stream().map(s -> s + " ").toList());
-    String lastLine = all.removeLast();
-    //// IO.println("lastLine: '%s'".formatted(lastLine));
-    List<String> columns = new ArrayList<>(Arrays.asList(lastLine.splitWithDelimiters("\\s+", 0)));
-    String[] numbers = all.toArray(new String[0]);
-
-    // IO.println(columns);
-    // IO.println(columns.stream().mapToInt(String::length).boxed().toList());
+    // Make mutable copies
+    List<String> rows = new ArrayList<>(lines.stream().map(s -> s + " ").toList());
+    List<String> columnSpecs = new ArrayList<>(Arrays.asList(rows.removeLast().splitWithDelimiters("\\s+", 0)));
 
     long total = 0;
 
-    while (!columns.isEmpty()) {
-      var width = columns.removeLast().length() + 1;
-      var symbol = columns.removeLast();
+    while (!columnSpecs.isEmpty()) {
+      var width = columnSpecs.removeLast().length() + 1;
+      var symbol = columnSpecs.removeLast();
       var digits = width - 1;
 
-      // IO.println("width: %d; symbol: %s".formatted(width, symbol));
-
-      // Numbers in this column with padding
-      List<String> ns = new ArrayList<>();
-      for (int i = 0; i < numbers.length; i++) {
-        String line = numbers[i];
-        int colStart = line.length() - width;
-        // last char is space
-        String chunk = line.substring(colStart, line.length() - 1);
-        // IO.println("lineLength: %d; colStart; %d; chunk: '%s'".formatted(line.length(), colStart,
-        // chunk));
-        ns.add(chunk);
-        numbers[i] = line.substring(0, colStart);
-      }
-
-      List<Long> nums = new ArrayList<>();
-      for (int i = 0; i < digits; i++) {
-        long n = 0;
-        for (String s : ns) {
-          int idx = digits - 1 - i;
-          char d = s.charAt(idx);
-          if (d != ' ') {
-            n *= 10;
-            n += d - '0';
-          }
-        }
-        nums.add(n);
-      }
+      List<String> column = extractColumn(rows, width);
+      var nums = extractSquidNumbers(column, digits);
 
       if (symbol.equals("+")) {
-        // IO.println("Adding " + nums);
         total += nums.stream().mapToLong(n -> n).sum();
       } else if (symbol.equals("*")) {
-        // IO.println("Multiplying " + nums);
         total += nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
       }
     }
     return total;
   }
 
-  // private List<Long> numsToCephalopod(List<Long> nums) {
-  //   List<Long> newNums = new ArrayList<>();
-  //   int maxDigits = nums.stream().mapToInt(n -> (int) ceil(log10(n)));
-  //   List<String> padded = nums.stream().map(n -> {
-  //       int d = (int) ceil(log10(n));
-  //       return "" + d + "0".repeat(maxDigits - d);
-  //     });
+  private String[][] simpleGrid(List<String> lines) {
+    return lines.stream().map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
+  }
 
-  //   for (int c = 0; c <
-  //   while (true) {
-  //     long n = 0;
-  //     for (int i = 0; i < nums.size(); i++) {
+  private List<String> extractColumn(List<String> rows, int width) {
+    List<String> ns = new ArrayList<>();
+    for (int i = 0; i < rows.size(); i++) {
+      String line = rows.get(i);
+      int colStart = line.length() - width;
+      // last char is always space
+      String chunk = line.substring(colStart, line.length() - 1);
+      ns.add(chunk);
+      // Mutate the line
+      rows.set(i, line.substring(0, colStart));
+    }
+    return ns;
+  }
 
-  //     }
-  //   }
-  // }
+
+  private List<Long> extractSquidNumbers(List<String> column, int digits ) {
+    List<Long> nums = new ArrayList<>();
+    for (int i = 0; i < digits; i++) {
+      long n = 0;
+      for (String s : column) {
+        int idx = digits - 1 - i;
+        char d = s.charAt(idx);
+        if (d != ' ') {
+          n *= 10;
+          n += d - '0';
+        }
+      }
+      nums.add(n);
+    }
+    return nums;
+  }
+
+
 }
