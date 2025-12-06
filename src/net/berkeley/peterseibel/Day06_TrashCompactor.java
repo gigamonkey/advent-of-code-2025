@@ -2,12 +2,27 @@ package net.berkeley.peterseibel;
 
 import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
+import static java.util.stream.Gatherers.scan;
 
 import module java.base;
 
 public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
-  private static Pattern specPattern = Pattern.compile("\\S\\s+");
+  private static Pattern specPattern = Pattern.compile("(\\S\\s*)( |$)");
+
+  private record Column(char symbol, int start, int width) {
+    public static Column initial() {
+      return new Column((char) 0, -1, 0);
+    }
+
+    public String extract(String line) {
+      return line.substring(start, start + width);
+    }
+
+    public Column next(String s) {
+      return new Column(s.charAt(0), start + width + 1, s.length());
+    }
+  }
 
   public Day06_TrashCompactor() {
     super(6, Data::asLines, Data::asLong);
@@ -32,12 +47,12 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    List<String> rows = new ArrayList<>(lines.stream().map(s -> s + " ").toList());
-    List<String> specs = extractColumnSpecs(rows.removeLast());
+    List<Column> specs = columnSpecs(lines.getLast());
+    List<String> numberRows = lines.subList(0, lines.size() - 1);
 
     long total = 0;
-    while (!specs.isEmpty()) {
-      total += columnValue(specs.removeLast(), rows);
+    for (var spec : specs) {
+      total += squidColumnValue(spec, numberRows);
     }
     return total;
   }
@@ -46,45 +61,32 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     return lines.stream().map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
   }
 
-  private List<String> extractColumnSpecs(String line) {
-    return new ArrayList<>(specPattern.matcher(line).results().map(MatchResult::group).toList());
+  private List<Column> columnSpecs(String line) {
+    return specPattern
+        .matcher(line)
+        .results()
+        .map(m -> m.group(1))
+        .gather(scan(Column::initial, Column::next))
+        .toList();
   }
 
-  private long columnValue(String spec, List<String> rows) {
-    var width = spec.length();
-    var symbol = spec.substring(0, 1);
+  private long squidColumnValue(Column spec, List<String> numberRows) {
+    var column = numberRows.stream().map(spec::extract).toList();
+    var nums = extractSquidNumbers(column, spec.width());
 
-    List<String> column = extractColumn(rows, width);
-    var nums = extractSquidNumbers(column, width - 1);
-
-    if (symbol.equals("+")) {
+    if (spec.symbol() == '+') {
       return nums.stream().mapToLong(n -> n).sum();
     } else {
       return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
     }
   }
 
-  private List<String> extractColumn(List<String> rows, int width) {
-    List<String> ns = new ArrayList<>();
-    for (int i = 0; i < rows.size(); i++) {
-      String line = rows.get(i);
-      int colStart = line.length() - width;
-      // last char is always space
-      String chunk = line.substring(colStart, line.length() - 1);
-      ns.add(chunk);
-      // Mutate the line
-      rows.set(i, line.substring(0, colStart));
-    }
-    return ns;
-  }
-
-  private List<Long> extractSquidNumbers(List<String> column, int digits) {
+  private List<Long> extractSquidNumbers(List<String> column, int width) {
     List<Long> nums = new ArrayList<>();
-    for (int i = 0; i < digits; i++) {
+    for (int i = 0; i < width; i++) {
       long n = 0;
       for (String s : column) {
-        int idx = digits - 1 - i;
-        char d = s.charAt(idx);
+        char d = s.charAt(i);
         if (d != ' ') {
           n *= 10;
           n += d - '0';
