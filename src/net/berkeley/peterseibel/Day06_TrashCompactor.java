@@ -2,6 +2,7 @@ package net.berkeley.peterseibel;
 
 import static java.lang.Math.*;
 import static java.util.stream.Gatherers.scan;
+import static java.util.stream.IntStream.range;
 
 import module java.base;
 
@@ -38,7 +39,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   public Long solve(List<String> lines, BiFunction<List<String>, Column, List<Long>> fn) {
     List<Column> specs = columnSpecs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
-    return specs.stream().mapToLong(spec -> columnValue(spec, column, fn)).sum();
+    return specs.stream().mapToLong(spec -> columnValue(spec, numberRows, fn)).sum();
   }
 
   private List<Column> columnSpecs(String line) {
@@ -51,15 +52,15 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   private long columnValue(
-      Column spec, List<String> column, BiFunction<List<String>, Column, List<Long>> fn) {
+      Column spec, List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
     var column = numberRows.stream().map(spec::extract).toList();
     var nums = fn.apply(column, spec);
 
-    if (spec.symbol() == '+') {
-      return nums.stream().mapToLong(n -> n).sum();
-    } else {
-      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
-    }
+    return nums.stream()
+        .mapToLong(n -> n)
+        .reduce(
+            spec.symbol() == '+' ? 0 : 1,
+            spec.symbol() == '+' ? ((acc, n) -> acc + n) : ((acc, n) -> acc * n));
   }
 
   private List<Long> extractHumanNumbers(List<String> column, Column spec) {
@@ -67,18 +68,20 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   private List<Long> extractSquidNumbers(List<String> column, Column spec) {
-    List<Long> nums = new ArrayList<>();
-    for (int i = 0; i < spec.width(); i++) {
-      long n = 0;
-      for (String s : column) {
-        char d = s.charAt(i);
-        if (d != ' ') {
-          n *= 10;
-          n += d - '0';
-        }
-      }
-      nums.add(n);
-    }
-    return nums;
+    return range(0, spec.width())
+        .mapToLong(
+            i -> {
+              long n = 0;
+              for (String s : column) {
+                char d = s.charAt(i);
+                if (d != ' ') {
+                  n *= 10;
+                  n += d - '0';
+                }
+              }
+              return n;
+            })
+        .boxed()
+        .toList();
   }
 }
