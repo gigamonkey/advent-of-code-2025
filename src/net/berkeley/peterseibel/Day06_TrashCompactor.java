@@ -7,6 +7,8 @@ import module java.base;
 
 public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
+  private static Pattern specPattern = Pattern.compile("\\S\\s+");
+
   public Day06_TrashCompactor() {
     super(6, Data::asLines, Data::asLong);
   }
@@ -30,32 +32,36 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-
-    // Make mutable copies
     List<String> rows = new ArrayList<>(lines.stream().map(s -> s + " ").toList());
-    List<String> columnSpecs = new ArrayList<>(Arrays.asList(rows.removeLast().splitWithDelimiters("\\s+", 0)));
+    List<String> specs = extractColumnSpecs(rows.removeLast());
 
     long total = 0;
-
-    while (!columnSpecs.isEmpty()) {
-      var width = columnSpecs.removeLast().length() + 1;
-      var symbol = columnSpecs.removeLast();
-      var digits = width - 1;
-
-      List<String> column = extractColumn(rows, width);
-      var nums = extractSquidNumbers(column, digits);
-
-      if (symbol.equals("+")) {
-        total += nums.stream().mapToLong(n -> n).sum();
-      } else if (symbol.equals("*")) {
-        total += nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
-      }
+    while (!specs.isEmpty()) {
+      total += columnValue(specs.removeLast(), rows);
     }
     return total;
   }
 
   private String[][] simpleGrid(List<String> lines) {
     return lines.stream().map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
+  }
+
+  private List<String> extractColumnSpecs(String line) {
+    return new ArrayList<>(specPattern.matcher(line).results().map(MatchResult::group).toList());
+  }
+
+  private long columnValue(String spec, List<String> rows) {
+    var width = spec.length();
+    var symbol = spec.substring(0, 1);
+
+    List<String> column = extractColumn(rows, width);
+    var nums = extractSquidNumbers(column, width - 1);
+
+    if (symbol.equals("+")) {
+      return nums.stream().mapToLong(n -> n).sum();
+    } else {
+      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
+    }
   }
 
   private List<String> extractColumn(List<String> rows, int width) {
@@ -72,8 +78,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     return ns;
   }
 
-
-  private List<Long> extractSquidNumbers(List<String> column, int digits ) {
+  private List<Long> extractSquidNumbers(List<String> column, int digits) {
     List<Long> nums = new ArrayList<>();
     for (int i = 0; i < digits; i++) {
       long n = 0;
@@ -89,6 +94,4 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     }
     return nums;
   }
-
-
 }
