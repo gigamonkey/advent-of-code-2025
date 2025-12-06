@@ -30,6 +30,14 @@ class Data {
     }
   }
 
+  public static String[][] asStringGrid(Path p) {
+    try {
+      return lines(p).map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
+  }
+
   public static Integer asInteger(Path p) {
     return Integer.valueOf(asString(p).trim());
   }
