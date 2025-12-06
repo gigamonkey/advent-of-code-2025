@@ -29,21 +29,17 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    List<Column> specs = columnSpecs(lines.getLast());
-    List<String> numberRows = lines.subList(0, lines.size() - 1);
-    return specs.stream().mapToLong(spec -> humanColumnValue(spec, numberRows)).sum();
+    return solve(lines, this::extractHumanNumbers);
  }
 
   public Long part2(List<String> lines) {
-    List<Column> specs = columnSpecs(lines.getLast());
-    List<String> numberRows = lines.subList(0, lines.size() - 1);
-    return specs.stream().mapToLong(spec -> squidColumnValue(spec, numberRows)).sum();
+    return solve(lines, this::extractSquidNumbers);
   }
 
-  public Long solve(List<String> lines, ToLongFunction<Column> fn) {
+  public Long solve(List<String> lines, BiFunction<List<String>, Column, List<Long>> fn) {
     List<Column> specs = columnSpecs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
-    return specs.stream().mapToLong(fn).sum();
+    return specs.stream().mapToLong(spec -> columnValue(spec, numberRows, fn)).sum();
   }
 
   private List<Column> columnSpecs(String line) {
@@ -53,14 +49,6 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
         .map(m -> m.group(1))
         .gather(scan(Column::initial, Column::next))
         .toList();
-  }
-
-  private long humanColumnValue(Column spec, List<String> numberRows) {
-    return columnValue(spec, numberRows, this::extractHumanNumbers);
-  }
-
-  private long squidColumnValue(Column spec, List<String> numberRows) {
-    return columnValue(spec, numberRows, this::extractSquidNumbers);
   }
 
   private long columnValue(Column spec, List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
@@ -73,7 +61,6 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
       return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
     }
   }
-
 
   private List<Long> extractHumanNumbers(List<String> column, Column spec) {
     return column.stream().map(String::trim).map(Long::parseLong).toList();
