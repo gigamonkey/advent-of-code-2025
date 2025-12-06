@@ -29,19 +29,12 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    String[][] grid = simpleGrid(lines);
+    List<Column> specs = columnSpecs(lines.getLast());
+    List<String> numberRows = lines.subList(0, lines.size() - 1);
+
     long total = 0;
-    for (int c = 0; c < grid[0].length; c++) {
-      List<Long> nums = new ArrayList<>();
-      for (int r = 0; r < grid.length - 1; r++) {
-        nums.add(parseLong(grid[r][c]));
-      }
-      var symbol = grid[grid.length - 1][c];
-      if (symbol.equals("+")) {
-        total += nums.stream().mapToLong(n -> n).sum();
-      } else if (symbol.equals("*")) {
-        total += nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
-      }
+    for (var spec : specs) {
+      total += humanColumnValue(spec, numberRows);
     }
     return total;
   }
@@ -70,6 +63,17 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
         .toList();
   }
 
+  private long humanColumnValue(Column spec, List<String> numberRows) {
+    var column = numberRows.stream().map(spec::extract).toList();
+    var nums = extractHumanNumbers(column);
+
+    if (spec.symbol() == '+') {
+      return nums.stream().mapToLong(n -> n).sum();
+    } else {
+      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
+    }
+  }
+
   private long squidColumnValue(Column spec, List<String> numberRows) {
     var column = numberRows.stream().map(spec::extract).toList();
     var nums = extractSquidNumbers(column, spec.width());
@@ -79,6 +83,10 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     } else {
       return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
     }
+  }
+
+  private List<Long> extractHumanNumbers(List<String> column) {
+    return column.stream().map(String::trim).map(Long::parseLong).toList();
   }
 
   private List<Long> extractSquidNumbers(List<String> column, int width) {
