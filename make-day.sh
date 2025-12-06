@@ -5,8 +5,7 @@ set -euo pipefail
 day=$1
 name=$2
 
-
-inputs=$(printf "inputs/day-%02d/" $day)
+inputs=$(printf "inputs/day-%02d" $day)
 class=$(printf "Day%02d_%s" $day $name)
 file="src/net/berkeley/peterseibel/$class.java"
 
@@ -15,17 +14,16 @@ if [[ -e "$file" ]]; then
     exit 1
 fi
 
-echo "Making inputs dir $inputs"
 mkdir -p "$inputs"
 touch "$inputs/test.txt"
 touch "$inputs/test.part1.expected"
 
-echo "Saving to $file"
-
 cat > "$file" <<EOF;
 package net.berkeley.peterseibel;
 
+import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
+import static java.util.Arrays.stream;
 
 import module java.base;
 
@@ -44,3 +42,8 @@ public class $class extends Solution<List<String>, Long> {
   }
 }
 EOF
+
+# Echo files so I can jump to them from terminal buffer
+echo "$inputs/test.txt"
+echo "$inputs/test.part1.expected"
+echo "$file"
