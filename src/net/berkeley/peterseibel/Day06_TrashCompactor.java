@@ -40,8 +40,10 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     return specs.stream().mapToLong(spec -> squidColumnValue(spec, numberRows)).sum();
   }
 
-  private String[][] simpleGrid(List<String> lines) {
-    return lines.stream().map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
+  public Long solve(List<String> lines, ToLongFunction<Column> fn) {
+    List<Column> specs = columnSpecs(lines.getLast());
+    List<String> numberRows = lines.subList(0, lines.size() - 1);
+    return specs.stream().mapToLong(fn).sum();
   }
 
   private List<Column> columnSpecs(String line) {
@@ -55,7 +57,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
   private long humanColumnValue(Column spec, List<String> numberRows) {
     var column = numberRows.stream().map(spec::extract).toList();
-    var nums = extractHumanNumbers(column);
+    var nums = extractHumanNumbers(column, spec);
 
     if (spec.symbol() == '+') {
       return nums.stream().mapToLong(n -> n).sum();
@@ -66,7 +68,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
   private long squidColumnValue(Column spec, List<String> numberRows) {
     var column = numberRows.stream().map(spec::extract).toList();
-    var nums = extractSquidNumbers(column, spec.width());
+    var nums = extractSquidNumbers(column, spec);
 
     if (spec.symbol() == '+') {
       return nums.stream().mapToLong(n -> n).sum();
@@ -75,13 +77,25 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     }
   }
 
-  private List<Long> extractHumanNumbers(List<String> column) {
+  private long columnValue(Column spec, List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
+    var column = numberRows.stream().map(spec::extract).toList();
+    var nums = fn.apply(column, spec);
+
+    if (spec.symbol() == '+') {
+      return nums.stream().mapToLong(n -> n).sum();
+    } else {
+      return nums.stream().mapToLong(n -> n).reduce(1, (acc, n) -> acc * n);
+    }
+  }
+
+
+  private List<Long> extractHumanNumbers(List<String> column, Column spec) {
     return column.stream().map(String::trim).map(Long::parseLong).toList();
   }
 
-  private List<Long> extractSquidNumbers(List<String> column, int width) {
+  private List<Long> extractSquidNumbers(List<String> column, Column spec) {
     List<Long> nums = new ArrayList<>();
-    for (int i = 0; i < width; i++) {
+    for (int i = 0; i < spec.width(); i++) {
       long n = 0;
       for (String s : column) {
         char d = s.charAt(i);
