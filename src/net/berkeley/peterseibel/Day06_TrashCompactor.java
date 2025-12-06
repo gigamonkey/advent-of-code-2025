@@ -31,23 +31,13 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   public Long part1(List<String> lines) {
     List<Column> specs = columnSpecs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
-
-    long total = 0;
-    for (var spec : specs) {
-      total += humanColumnValue(spec, numberRows);
-    }
-    return total;
-  }
+    return specs.stream().mapToLong(spec -> humanColumnValue(spec, numberRows)).sum();
+ }
 
   public Long part2(List<String> lines) {
     List<Column> specs = columnSpecs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
-
-    long total = 0;
-    for (var spec : specs) {
-      total += squidColumnValue(spec, numberRows);
-    }
-    return total;
+    return specs.stream().mapToLong(spec -> squidColumnValue(spec, numberRows)).sum();
   }
 
   private String[][] simpleGrid(List<String> lines) {
