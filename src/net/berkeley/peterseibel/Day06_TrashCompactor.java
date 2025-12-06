@@ -1,6 +1,5 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.stream.Gatherers.scan;
 
@@ -30,7 +29,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
   public Long part1(List<String> lines) {
     return solve(lines, this::extractHumanNumbers);
- }
+  }
 
   public Long part2(List<String> lines) {
     return solve(lines, this::extractSquidNumbers);
@@ -39,7 +38,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
   public Long solve(List<String> lines, BiFunction<List<String>, Column, List<Long>> fn) {
     List<Column> specs = columnSpecs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
-    return specs.stream().mapToLong(spec -> columnValue(spec, numberRows, fn)).sum();
+    return specs.stream().mapToLong(spec -> columnValue(spec, column, fn)).sum();
   }
 
   private List<Column> columnSpecs(String line) {
@@ -51,7 +50,8 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
         .toList();
   }
 
-  private long columnValue(Column spec, List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
+  private long columnValue(
+      Column spec, List<String> column, BiFunction<List<String>, Column, List<Long>> fn) {
     var column = numberRows.stream().map(spec::extract).toList();
     var nums = fn.apply(column, spec);
 
