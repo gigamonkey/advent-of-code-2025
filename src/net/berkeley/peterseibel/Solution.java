@@ -7,9 +7,52 @@ import module java.base;
 
 public abstract class Solution<I, R> {
 
-  private record Result(boolean ok, String message) {}
+  private static final List<String> names = List.of("test", "puzzle");
+  private static final List<Integer> parts = List.of(1, 2);
+
+  private final int day;
+  private final Function<Path, I> inputParser;
+  private final Function<Path, R> expectedParser;
+  private final List<Checker> checkers;
+
+  public Solution(int day, Function<Path, I> inputParser, Function<Path, R> expectedParser) {
+    this.day = day;
+    this.inputParser = inputParser;
+    this.expectedParser = expectedParser;
+    this.checkers = cross(names, parts, Checker::new);
+  }
+
+  /**
+   * Solve part 1.
+   */
+  public abstract R part1(I input) throws IOException;
+
+  /**
+   * Solve part 2.
+   */
+  public abstract R part2(I input) throws IOException;
+
+  /**
+   * Check all the parts we have inputs for.
+   */
+  public final void check() {
+    for (var c : checkers) {
+      var r = c.check();
+      IO.println(r.message());
+      if (!r.ok()) break;
+    }
+  }
+
+  private static <T, U, R> List<R> cross(List<T> ts, List<U> us, BiFunction<T, U, R> fn) {
+    return ts.stream().flatMap(t -> us.stream().map(u -> fn.apply(t, u))).toList();
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Actual checking code
 
   private class Checker {
+
+    private record Result(boolean ok, String message) {}
 
     private final String name;
     private final int part;
@@ -20,7 +63,7 @@ public abstract class Solution<I, R> {
     }
 
     public Result check() {
-      return maybeInput(name, part).map(this::checkInput).orElseGet(this::noInput);
+      return maybeInput(name, part).map(this::checkInput).orElseGet(() -> stop("❓", ": No input"));
     }
 
     private Result checkInput(I input) {
@@ -31,86 +74,41 @@ public abstract class Solution<I, R> {
 
         return maybeExpected(name, part)
             .map(expected -> testResult(result, expected, time))
-            .orElseGet(() -> showResult(result, time));
+            .orElseGet(() -> stop("🟡", "%s %s".formatted(time, result)));
 
       } catch (IOException ioe) {
-        return new Result(false, msg("💣", ": %s".formatted(ioe)));
+        return stop("💣", ": %s".formatted(ioe));
       }
     }
 
     private Result testResult(R result, R expected, String time) {
-      if (result.equals(expected)) {
-        return new Result(true, msg("✅", time));
-      } else {
-        return new Result(
-            false, msg("❌", "%s: got: %s; expected: %s ".formatted(time, result, expected)));
-      }
+      return result.equals(expected)
+          ? ok("✅", time)
+          : stop("❌", "%s: got: %s; expected: %s ".formatted(time, result, expected));
     }
 
-    private Result showResult(R result, String time) {
-      return new Result(false, msg("🟡", "%s %s".formatted(time, result)));
+    private Result ok(String emoji, String detail) {
+      return new Result(true, msg(emoji, detail));
     }
 
-    private Result noInput() {
-      return new Result(false, msg("❓", ": No input"));
+    private Result stop(String emoji, String detail) {
+      return new Result(false, msg(emoji, detail));
     }
 
     private String msg(String emoji, String detail) {
       return "%s Day %d, part %d - %s%s".formatted(emoji, day, part, name, detail);
     }
-  }
 
-  private final int day;
-  private final Function<Path, I> inputParser;
-  private final Function<Path, R> expectedParser;
-
-  public Solution(int day, Function<Path, I> inputParser, Function<Path, R> expectedParser) {
-    this.day = day;
-    this.inputParser = inputParser;
-    this.expectedParser = expectedParser;
-  }
-
-  /**
-   * Solve part 1.
-   */
-  public abstract R part1(I input) throws IOException;
-
-  /**
-   * Solve part 2. (Default implementation so we don't have to write it right away.)
-   */
-  public R part2(I input) throws IOException {
-    throw new Error("NYI");
-  }
-
-  /**
-   * Check all the parts we have inputs for.
-   */
-  public final void check() {
-    List<Checker> checkers =
-        List.of(
-            new Checker("test", 1),
-            new Checker("puzzle", 1),
-            new Checker("test", 2),
-            new Checker("puzzle", 2));
-    for (var c : checkers) {
-      var r = c.check();
-      IO.println(r.message());
-      if (!r.ok()) break;
+    private Optional<Path> maybePath(String name) {
+      return Optional.of(Path.of("inputs/day-%02d/%s".formatted(day, name))).filter(Files::exists);
     }
-  }
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Actual checking code
+    private Optional<I> maybeInput(String name, int part) {
+      return maybePath("%s.data".formatted(name)).map(inputParser);
+    }
 
-  private Optional<Path> maybePath(String name) {
-    return Optional.of(Path.of("inputs/day-%02d/%s".formatted(day, name))).filter(Files::exists);
-  }
-
-  private Optional<I> maybeInput(String name, int part) {
-    return maybePath("%s.data".formatted(name)).map(inputParser);
-  }
-
-  private Optional<R> maybeExpected(String name, int part) {
-    return maybePath("%s.part%d.expected".formatted(name, part)).map(expectedParser);
+    private Optional<R> maybeExpected(String name, int part) {
+      return maybePath("%s.part%d.expected".formatted(name, part)).map(expectedParser);
+    }
   }
 }
