@@ -33,7 +33,6 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
 
   public Long part2(List<String> lines) {
     long[] paths = startPaths(lines.getFirst());
-    IO.println(lines.getFirst());
     for (String line : lines.subList(1, lines.size())) {
       var splitters = splitters(line);
       for (int i = 0; i < splitters.length; i++) {
@@ -43,8 +42,6 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
           paths[i] = 0;
         }
       }
-      IO.println(line);
-      IO.println(Arrays.stream(paths).mapToObj(n -> "" + n).collect(joining("")));
     }
     long count = 0L;
     for (int i = 0; i < paths.length; i++ ) {
