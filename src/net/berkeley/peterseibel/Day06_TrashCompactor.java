@@ -8,7 +8,7 @@ import module java.base;
 
 public class Day06_TrashCompactor extends Solution<List<String>, Long> {
 
-  private static Pattern specPattern = Pattern.compile("(\\S\\s*)( |$)");
+  private static Pattern specPattern = Pattern.compile("([+*]\\s*)( |$)");
 
   private record Column(char symbol, int start, int width) {
 
@@ -21,21 +21,21 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
           .toList();
     }
 
-    private static Column initial() {
-      return new Column((char) 0, -1, 0);
+    public long value(List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
+      var column = numberRows.stream().map(this::extract).toList();
+      return fn.apply(column, this).stream().mapToLong(n -> n).reduce(zero(), reducer());
     }
 
-    private String extract(String line) {
-      return line.substring(start, start + width);
+    private static Column initial() {
+      return new Column((char) 0, -1, 0);
     }
 
     private Column next(String s) {
       return new Column(s.charAt(0), start + width + 1, s.length());
     }
 
-    public long value(List<String> numberRows, BiFunction<List<String>, Column, List<Long>> fn) {
-      var column = numberRows.stream().map(this::extract).toList();
-      return fn.apply(column, this).stream().mapToLong(n -> n).reduce(zero(), reducer());
+    private String extract(String line) {
+      return line.substring(start, start + width);
     }
 
     private long zero() {
