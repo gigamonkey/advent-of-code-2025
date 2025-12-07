@@ -1,5 +1,6 @@
 package net.berkeley.peterseibel;
 
+import static java.util.stream.Collectors.*;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
@@ -30,6 +31,30 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
     return count;
   }
 
+  public Long part2(List<String> lines) {
+    long[] paths = startPaths(lines.getFirst());
+    IO.println(lines.getFirst());
+    for (String line : lines.subList(1, lines.size())) {
+      var splitters = splitters(line);
+      for (int i = 0; i < splitters.length; i++) {
+        if (paths[i] > 0 && splitters[i]) {
+          if (i > 0) paths[i - 1] += paths[i];
+          if (i < paths.length - 1) paths[i + 1] += paths[i];
+          paths[i] = 0;
+        }
+      }
+      IO.println(line);
+      IO.println(Arrays.stream(paths).mapToObj(n -> "" + n).collect(joining("")));
+    }
+    long count = 0L;
+    for (int i = 0; i < paths.length; i++ ) {
+      count += paths[i];
+    }
+    return count;
+  }
+
+
+
   private boolean[] splitters(String line) {
     char[] chars = line.toCharArray();
     boolean[] r = new boolean[chars.length];
@@ -50,9 +75,13 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
     return r;
   }
 
-
-
-  public Long part2(List<String> banks) {
-    return 0L;
+  private long[] startPaths(String line) {
+    char[] chars = line.toCharArray();
+    long[] r = new long[chars.length];
+    for (int i = 0; i < chars.length; i++) {
+      r[i] = chars[i] == 'S' ? 1 : 0;
+    }
+    return r;
   }
+
 }
