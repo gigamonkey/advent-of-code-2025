@@ -59,7 +59,7 @@ public class Day06_TrashCompactor extends Solution<List<String>, Long> {
     return solve(lines, this::extractSquidNumbers);
   }
 
-  public Long solve(List<String> lines, BiFunction<List<String>, Column, List<Long>> fn) {
+  private Long solve(List<String> lines, BiFunction<List<String>, Column, List<Long>> fn) {
     List<Column> specs = Column.specs(lines.getLast());
     List<String> numberRows = lines.subList(0, lines.size() - 1);
     return specs.stream().mapToLong(spec -> spec.value(numberRows, fn)).sum();
