@@ -24,6 +24,8 @@ package net.berkeley.peterseibel;
 import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.*;
+import static java.util.stream.Gatherers.*;
 
 import module java.base;
 
@@ -33,12 +35,14 @@ public class $class extends Solution<List<String>, Long> {
     super($day, Data::asLines, Data::asLong);
   }
 
-  public Long part1(List<String> banks) {
-    return 0L;
+  public Long part1(List<String> lines) {
+    long count = 0;
+    return count;
   }
 
-  public Long part2(List<String> banks) {
-    return 0L;
+  public Long part2(List<String> lines) {
+    long count = 0;
+    return count;
   }
 }
 EOF
