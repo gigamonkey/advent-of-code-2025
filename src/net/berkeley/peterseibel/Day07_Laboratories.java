@@ -28,7 +28,7 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
     private long[] paths = null;
 
     public static Solver solve(List<String> lines) {
-      return lines.stream().gather(fold(Solver::new, Solver::update)).findFirst().get();
+      return lines.stream().gather(fold(Solver::new, Solver::update)).findFirst().orElseThrow();
     }
 
     public long splits() {
