@@ -1,9 +1,7 @@
 package net.berkeley.peterseibel;
 
-import static java.util.stream.Collectors.*;
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
-import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.*;
 
 import module java.base;
 
@@ -44,20 +42,17 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
       }
     }
     long count = 0L;
-    for (int i = 0; i < paths.length; i++ ) {
+    for (int i = 0; i < paths.length; i++) {
       count += paths[i];
     }
     return count;
   }
-
-
 
   private boolean[] splitters(String line) {
     char[] chars = line.toCharArray();
     boolean[] r = new boolean[chars.length];
     for (int i = 0; i < chars.length; i++) {
       r[i] = (chars[i] == '^');
-
     }
     return r;
   }
@@ -67,7 +62,6 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
     boolean[] r = new boolean[chars.length];
     for (int i = 0; i < chars.length; i++) {
       r[i] = (chars[i] == 'S');
-
     }
     return r;
   }
@@ -80,5 +74,4 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
     }
     return r;
   }
-
 }

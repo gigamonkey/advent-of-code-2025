@@ -2,7 +2,6 @@ package net.berkeley.peterseibel;
 
 import static java.lang.Math.round;
 import static java.lang.System.nanoTime;
-import static net.berkeley.peterseibel.Either.fromOptional;
 
 import module java.base;
 
@@ -21,11 +20,8 @@ public abstract class Solution<I, R> {
     }
 
     public Result check() {
-      return maybeInput(name, part)
-        .map(this::checkInput)
-        .orElseGet(this::noInput);
+      return maybeInput(name, part).map(this::checkInput).orElseGet(this::noInput);
     }
-
 
     private Result checkInput(I input) {
       try {
@@ -34,8 +30,8 @@ public abstract class Solution<I, R> {
         var time = " (%d ms)".formatted(round((nanoTime() - start) / 1e6));
 
         return maybeExpected(name, part)
-          .map(expected -> testResult(result, expected, time))
-          .orElseGet(() -> showResult(result, time));
+            .map(expected -> testResult(result, expected, time))
+            .orElseGet(() -> showResult(result, time));
 
       } catch (IOException ioe) {
         return new Result(false, msg("💣", ": %s".formatted(ioe)));
@@ -46,7 +42,8 @@ public abstract class Solution<I, R> {
       if (result.equals(expected)) {
         return new Result(true, msg("✅", time));
       } else {
-        return new Result(false, msg("❌", "%s: got: %s; expected: %s ".formatted(time, result, expected)));
+        return new Result(
+            false, msg("❌", "%s: got: %s; expected: %s ".formatted(time, result, expected)));
       }
     }
 
@@ -89,11 +86,12 @@ public abstract class Solution<I, R> {
    * Check all the parts we have inputs for.
    */
   public final void check() {
-    List<Checker> checkers = List.of(
-      new Checker("test", 1),
-      new Checker("puzzle", 1),
-      new Checker("test", 2),
-      new Checker("puzzle", 2));
+    List<Checker> checkers =
+        List.of(
+            new Checker("test", 1),
+            new Checker("puzzle", 1),
+            new Checker("test", 2),
+            new Checker("puzzle", 2));
     for (var c : checkers) {
       var r = c.check();
       IO.println(r.message());
@@ -115,5 +113,4 @@ public abstract class Solution<I, R> {
   private Optional<R> maybeExpected(String name, int part) {
     return maybePath("%s.part%d.expected".formatted(name, part)).map(expectedParser);
   }
-
 }
