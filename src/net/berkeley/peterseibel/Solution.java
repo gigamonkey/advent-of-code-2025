@@ -33,7 +33,8 @@ public abstract class Solution<I, R> {
   public abstract R part2(I input) throws IOException;
 
   /**
-   * Check all the parts we have inputs for.
+   * Check all the parts we have inputs for, stopping after the first step that
+   * doesn't pass.
    */
   public final void check() {
     for (var c : checkers) {
