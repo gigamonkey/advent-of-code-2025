@@ -13,52 +13,35 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    long count = 0L;
-    boolean[] beams = booleans(lines.getFirst(), 'S');
-    for (String line : lines.subList(1, lines.size())) {
-      var splitters = booleans(line, '^');
-      for (int i = 0; i < splitters.length; i++) {
-        if (beams[i] && splitters[i]) {
-          count++;
-          if (i > 0) beams[i - 1] = true;
-          if (i < beams.length - 1) beams[i + 1] = true;
-          beams[i] = false;
-        }
-      }
-    }
-    return count;
+    return solveBoth(lines).splits();
   }
 
   public Long part2(List<String> lines) {
+    return solveBoth(lines).paths();
+  }
+
+  record Result(long splits, long paths) {}
+
+  // Hat tip to Brad who pointed out that you can solve both parts in one pass
+  public Result solveBoth(List<String> lines) {
+    long count = 0;
     long[] paths = startPaths(lines.getFirst());
     for (String line : lines.subList(1, lines.size())) {
-      var splitters = booleans(line, '^');
-      for (int i = 0; i < splitters.length; i++) {
-        if (paths[i] > 0 && splitters[i]) {
+      for (int i = 0; i < line.length(); i++) {
+        if (paths[i] > 0 && line.charAt(i) == '^') {
           if (i > 0) paths[i - 1] += paths[i];
           if (i < paths.length - 1) paths[i + 1] += paths[i];
           paths[i] = 0;
+          count++;
         }
       }
     }
-    return stream(paths).sum();
-  }
-
-  private boolean[] booleans(String line, char c) {
-    char[] chars = line.toCharArray();
-    boolean[] r = new boolean[chars.length];
-    for (int i = 0; i < chars.length; i++) {
-      r[i] = chars[i] == c;
-    }
-    return r;
+    return new Result(count, stream(paths).sum());
   }
 
   private long[] startPaths(String line) {
-    char[] chars = line.toCharArray();
-    long[] r = new long[chars.length];
-    for (int i = 0; i < chars.length; i++) {
-      r[i] = chars[i] == 'S' ? 1 : 0;
-    }
-    return r;
+    long[] paths = new long[line.length()];
+    paths[line.indexOf('S')] = 1;
+    return paths;
   }
 }
