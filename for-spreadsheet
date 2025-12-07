@@ -2,5 +2,9 @@
 
 set -euo pipefail
 
-pbpaste > board.json
+. .env
+
+url="https://adventofcode.com/2025/leaderboard/private/view/296723.json"
+
+curl -b "session=$ADVENT_OF_CODE_SESSION" "$url" -o board.json
 ./stars --tsv | pbcopy
