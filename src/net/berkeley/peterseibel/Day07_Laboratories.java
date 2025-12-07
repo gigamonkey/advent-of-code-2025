@@ -14,7 +14,6 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
 
   public Long part1(List<String> lines) {
     long count = 0L;
-
     boolean[] beams = booleans(lines.getFirst(), 'S');
     for (String line : lines.subList(1, lines.size())) {
       var splitters = booleans(line, '^');
@@ -42,7 +41,6 @@ public class Day07_Laboratories extends Solution<List<String>, Long> {
         }
       }
     }
-
     return stream(paths).sum();
   }
 
