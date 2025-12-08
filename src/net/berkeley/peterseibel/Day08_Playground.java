@@ -31,17 +31,14 @@ public class Day08_Playground extends Solution<List<String>, Long> {
     var boxes = boxes(lines);
     var byDistance = closest(boxes);
 
-    var pairs = boxes.size() == 20 ? 10 : 1000; // kludge
-
     Map<Box, Set<Box>> circuits = new HashMap<>();
 
+    var pairs = boxes.size() == 20 ? 10 : 1000; // kludge
     for (var c : byDistance.subList(0, pairs)) {
       connectCircuits(circuits, c);
     }
 
-    List<Set<Box>> allCircuits = new ArrayList<>(new HashSet<>(circuits.values()));
-    Collections.sort(allCircuits, (a, b) -> b.size() - a.size());
-    return allCircuits.subList(0, 3).stream().mapToLong(Set::size).reduce(1, (acc, n) -> acc * n);
+    return topN(circuits.values(), 3).stream().mapToLong(Set::size).reduce(1, (acc, n) -> acc * n);
   }
 
   public Long part2(List<String> lines) {
@@ -89,5 +86,12 @@ public class Day08_Playground extends Solution<List<String>, Long> {
 
   private Set<Box> circuitFor(Box box, Map<Box, Set<Box>> circuits) {
     return circuits.computeIfAbsent(box, (k) -> new HashSet<>(List.of(box)));
+  }
+
+  private List<Set<Box>> topN(Collection<Set<Box>> sets, int n) {
+    List<Set<Box>> unique = new ArrayList<>(new HashSet<>(sets));
+    ToIntFunction<Set<Box>> size = Set::size; // kludge to help typechecker
+    unique.sort(comparingInt(size).reversed());
+    return unique.subList(0, n);
   }
 }
