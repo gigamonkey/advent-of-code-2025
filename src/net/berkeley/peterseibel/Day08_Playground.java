@@ -4,7 +4,9 @@ import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
+import static java.util.stream.IntStream.range;
 import static java.util.stream.Gatherers.*;
+import static java.util.Comparator.*;
 
 import module java.base;
 
@@ -20,15 +22,12 @@ public class Day08_Playground extends Solution<List<String>, Long> {
       var parts = stream(line.split(",")).mapToLong(Long::parseLong).toArray();
       return new Box(parts[0], parts[1], parts[2]);
     }
-
-    public double distance(Box other) {
-      return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2) + pow(z - other.z, 2));
-    }
   }
 
   record Connection(Box a, Box b) {
-
-    public double distance() { return a.distance(b); }
+    public double distance() {
+      return hypot(hypot(a.x() - b.x(), a.y() - b.y()), a.z() - b.z());
+    }
   }
 
   public Day08_Playground() {
@@ -37,19 +36,12 @@ public class Day08_Playground extends Solution<List<String>, Long> {
 
   public Long part1(List<String> lines) {
     var boxes = Box.boxes(lines);
+    var byDistance = closest(boxes);
+    var pairs = boxes.size() == 20 ? 10 : 1000; // kludge
 
-    // kludge
-    var pairs = boxes.size() == 20 ? 10 : 1000;
-
-    //IO.println("%d boxes making %d pairs".formatted(boxes.size(), pairs));
-
-    Set<Connection> connections = new HashSet<>();
     Map<Box, Set<Box>> circuits = new HashMap<>();
 
-    for (int p = 0; p < pairs; p++) {
-      var c = closest(boxes, connections);
-      //IO.println("Connecting %s".formatted(c));
-      connections.add(c);
+    for (var c : byDistance.subList(0, pairs)) {
       var c1 = circuits.computeIfAbsent(c.a(), (k) -> new HashSet<>());
       c1.add(c.a());
       var c2 = circuits.computeIfAbsent(c.b(), (k) -> new HashSet<>());
@@ -59,47 +51,22 @@ public class Day08_Playground extends Solution<List<String>, Long> {
           c1.add(box);
           circuits.put(box, c1);
         }
-        //IO.println("Joining circuits of %s and %s size %d".formatted(c.a(), c.b(), c1.size()));
-      } else {
-        //IO.println("%s and %s already in same circuit size %d".formatted(c.a(), c.b(), c1.size()));
       }
-      //IO.println("  %s".formatted(c1));
     }
-    List<Set<Box>> allCircuits = new ArrayList<>(new HashSet<>(circuits.values()));
-    //IO.println("%d circuits".formatted(allCircuits.size()));
 
+    List<Set<Box>> allCircuits = new ArrayList<>(new HashSet<>(circuits.values()));
     Collections.sort(allCircuits, (a, b) -> b.size() - a.size());
 
-    // IO.println("all circuits");
-    // for (var x : allCircuits) {
-    //   IO.println("size: %d".formatted(x.size()));
-    // }
+    return allCircuits.subList(0, 3).stream().mapToLong(Set::size).reduce(1, (acc, n) -> acc * n);
 
-    // IO.println();
-
-    long prod = 1;
-    for (var x : allCircuits.subList(0, 3)) {
-      //IO.println("size: %d".formatted(x.size()));
-      prod *= x.size();
-    }
-    return prod;
   }
-
   public Long part2(List<String> lines) {
     var boxes = Box.boxes(lines);
+    var byDistance = closest(boxes);
 
-    // kludge
-    var pairs = boxes.size() == 20 ? 10 : 1000;
-
-    //IO.println("%d boxes making %d pairs".formatted(boxes.size(), pairs));
-
-    Set<Connection> connections = new HashSet<>();
     Map<Box, Set<Box>> circuits = new HashMap<>();
 
-    while (true) {
-      var c = closest(boxes, connections);
-      //IO.println(c);
-      connections.add(c);
+    for (var c : byDistance) {
       var c1 = circuits.computeIfAbsent(c.a(), (k) -> new HashSet<>());
       c1.add(c.a());
       var c2 = circuits.computeIfAbsent(c.b(), (k) -> new HashSet<>());
@@ -114,7 +81,20 @@ public class Day08_Playground extends Solution<List<String>, Long> {
         return c.a().x() * c.b().x();
       }
     }
+    throw new Error("wat");
   }
+
+  private List<Connection> closest(List<Box> boxes) {
+    List<Connection> all = new ArrayList<>();
+    for (int i = 0; i < boxes.size() - 1; i++) {
+      for (int j = i + 1; j < boxes.size(); j++) {
+        all.add(new Connection(boxes.get(i), boxes.get(j)));
+      }
+    }
+    all.sort(comparingDouble(Connection::distance));
+    return all;
+  }
+
 
   private static Connection closest(List<Box> boxes, Set<Connection> connected) {
     var closest = new Connection(boxes.get(0), boxes.get(1));
@@ -128,6 +108,4 @@ public class Day08_Playground extends Solution<List<String>, Long> {
     }
     return closest;
   }
-
-
 }
