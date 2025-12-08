@@ -86,10 +86,35 @@ public class Day08_Playground extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    long count = 0;
-    return count;
-  }
+    var boxes = Box.boxes(lines);
 
+    // kludge
+    var pairs = boxes.size() == 20 ? 10 : 1000;
+
+    //IO.println("%d boxes making %d pairs".formatted(boxes.size(), pairs));
+
+    Set<Connection> connections = new HashSet<>();
+    Map<Box, Set<Box>> circuits = new HashMap<>();
+
+    while (true) {
+      var c = closest(boxes, connections);
+      //IO.println(c);
+      connections.add(c);
+      var c1 = circuits.computeIfAbsent(c.a(), (k) -> new HashSet<>());
+      c1.add(c.a());
+      var c2 = circuits.computeIfAbsent(c.b(), (k) -> new HashSet<>());
+      c2.add(c.b());
+      if (c1 != c2) {
+        for (var box : c2) {
+          c1.add(box);
+          circuits.put(box, c1);
+        }
+      }
+      if (c1.size() == boxes.size()) {
+        return c.a().x() * c.b().x();
+      }
+    }
+  }
 
   private static Connection closest(List<Box> boxes, Set<Connection> connected) {
     var closest = new Connection(boxes.get(0), boxes.get(1));
