@@ -36,20 +36,19 @@ public class Day08_Playground extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    long count = 0;
     var boxes = Box.boxes(lines);
 
     // kludge
     var pairs = boxes.size() == 20 ? 10 : 1000;
 
-    IO.println("%d boxes making %d pairs".formatted(boxes.size(), pairs));
+    //IO.println("%d boxes making %d pairs".formatted(boxes.size(), pairs));
 
     Set<Connection> connections = new HashSet<>();
     Map<Box, Set<Box>> circuits = new HashMap<>();
 
     for (int p = 0; p < pairs; p++) {
       var c = closest(boxes, connections);
-      IO.println("Connecting %s".formatted(c));
+      //IO.println("Connecting %s".formatted(c));
       connections.add(c);
       var c1 = circuits.computeIfAbsent(c.a(), (k) -> new HashSet<>());
       c1.add(c.a());
@@ -60,28 +59,27 @@ public class Day08_Playground extends Solution<List<String>, Long> {
           c1.add(box);
           circuits.put(box, c1);
         }
-        IO.println("Joining circuits of %s and %s size %d".formatted(c.a(), c.b(), c1.size()));
+        //IO.println("Joining circuits of %s and %s size %d".formatted(c.a(), c.b(), c1.size()));
       } else {
-        IO.println("%s and %s already in same circuit size %d".formatted(c.a(), c.b(), c1.size()));
+        //IO.println("%s and %s already in same circuit size %d".formatted(c.a(), c.b(), c1.size()));
       }
-      IO.println("  %s".formatted(c1));
+      //IO.println("  %s".formatted(c1));
     }
     List<Set<Box>> allCircuits = new ArrayList<>(new HashSet<>(circuits.values()));
-    IO.println("%d circuits".formatted(allCircuits.size()));
+    //IO.println("%d circuits".formatted(allCircuits.size()));
 
     Collections.sort(allCircuits, (a, b) -> b.size() - a.size());
 
-    IO.println("all circuits");
-    for (var x : allCircuits) {
-      IO.println("size: %d".formatted(x.size()));
-    }
+    // IO.println("all circuits");
+    // for (var x : allCircuits) {
+    //   IO.println("size: %d".formatted(x.size()));
+    // }
 
-    IO.println();
-
+    // IO.println();
 
     long prod = 1;
     for (var x : allCircuits.subList(0, 3)) {
-      IO.println("size: %d".formatted(x.size()));
+      //IO.println("size: %d".formatted(x.size()));
       prod *= x.size();
     }
     return prod;

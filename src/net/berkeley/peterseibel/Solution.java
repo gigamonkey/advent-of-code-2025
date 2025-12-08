@@ -19,7 +19,12 @@ public abstract class Solution<I, R> {
     this.day = day;
     this.inputParser = inputParser;
     this.expectedParser = expectedParser;
-    this.checkers = cross(names, parts, Checker::new);
+    this.checkers = List.of(
+      new Checker("test", 1),
+      new Checker("puzzle", 1),
+      new Checker("test", 2),
+      new Checker("puzzle", 2));
+    //this.checkers = cross(names, parts, Checker::new);
   }
 
   /**
