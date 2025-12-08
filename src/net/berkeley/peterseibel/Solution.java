@@ -19,12 +19,7 @@ public abstract class Solution<I, R> {
     this.day = day;
     this.inputParser = inputParser;
     this.expectedParser = expectedParser;
-    this.checkers = List.of(
-      new Checker("test", 1),
-      new Checker("puzzle", 1),
-      new Checker("test", 2),
-      new Checker("puzzle", 2));
-    //this.checkers = cross(names, parts, Checker::new);
+    this.checkers = cross(parts, names, Checker::new);
   }
 
   /**
@@ -60,12 +55,12 @@ public abstract class Solution<I, R> {
 
     private record Result(boolean ok, String message) {}
 
-    private final String name;
     private final int part;
+    private final String name;
 
-    Checker(String name, int part) {
-      this.name = name;
+    Checker(int part, String name) {
       this.part = part;
+      this.name = name;
     }
 
     public Result check() {
