@@ -15,7 +15,7 @@ if [[ -e "$file" ]]; then
 fi
 
 mkdir -p "$inputs"
-touch "$inputs/test.txt"
+touch "$inputs/test.data"
 touch "$inputs/test.part1.expected"
 
 cat > "$file" <<EOF;
@@ -48,6 +48,6 @@ public class $class extends Solution<List<String>, Long> {
 EOF
 
 # Echo files so I can jump to them from terminal buffer
-echo "$inputs/test.txt"
+echo "$inputs/test.data"
 echo "$inputs/test.part1.expected"
 echo "$file"
