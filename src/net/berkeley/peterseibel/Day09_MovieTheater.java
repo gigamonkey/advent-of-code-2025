@@ -8,18 +8,58 @@ import static java.util.stream.Gatherers.*;
 
 import module java.base;
 
+
+// Wrong, part 2
+
+// 4588384997 - to high
+
 public class Day09_MovieTheater extends Solution<List<String>, Long> {
 
-  record Point(long col, long row) {
+  record Point(long column, long row) {
     static Point valueOf(String s) {
       long[] parts = stream(s.split(",")).mapToLong(Long::parseLong).toArray();
       return new Point(parts[0], parts[1]);
     }
 
     public long area(Point other) {
-      long area = (1 + abs(row  - other.row)) * (1 + abs(col - other.col));
-      //IO.println("Rectangle %s and %s area: %d".formatted(this, other, area));
-      return area;
+      return (1 + abs(row  - other.row)) * (1 + abs(column - other.column));
+    }
+
+    public boolean northOf(Line line) {
+      return line.isHorizontal() && row <= line.row() && between(line.a().column(), column, line.b().column());
+    }
+
+    public boolean eastOf(Line line) {
+      return line.isVertical() && column <= line.column() && between(line.a().row(), row, line.b().row());
+    }
+
+    public boolean southOf(Line line) {
+      return line.isHorizontal() && row >= line.row() && between(line.a().column(), column, line.b().column());
+    }
+
+    public boolean westOf(Line line) {
+      return line.isVertical() && column >= line.column() && between(line.a().row(), row, line.b().row());
+    }
+  }
+
+  private static boolean between(long a, long b, long c) {
+    return min(a,c) <= b && b <= max(a,c);
+  }
+
+
+  record Line(Point a, Point b) {
+
+    boolean isVertical() { return a.column() == b .column(); }
+    boolean isHorizontal() { return !isVertical(); }
+
+    long column() {
+      assert isVertical(): "Only vertical lines have column";
+      return a.column();
+    }
+
+    long row() {
+      assert !isVertical(): "Only horizontal lines have row";
+      return a.row();
     }
   }
 
@@ -30,7 +70,6 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
   public Long part1(List<String> lines) {
     long max = 0;
     List<Point> points = points(lines);
-    //IO.println(points);
     for (int i = 0; i < points.size() - 1; i++) {
       for (int j = i + 1; j < points.size(); j++) {
         max = Math.max(max, points.get(i).area(points.get(j)));
@@ -39,14 +78,51 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
     return max;
   }
 
-  public Long part2(List<String> lines) {
-    long count = 0;
-    return count;
-  }
+  public Long part2(List<String> input) {
+    long max = 0;
+    List<Point> points = points(input);
+    List<Line> lines = lines(points);
 
+
+    for (int i = 0; i < points.size() - 1; i++) {
+      for (int j = i + 1; j < points.size(); j++) {
+        Point a = points.get(i);
+        Point b = points.get(j);
+        if (cornersInside(a, b, lines)) {
+          max = Math.max(max, points.get(i).area(points.get(j)));
+        }
+      }
+    }
+    return max;
+  }
 
   private List<Point> points(List<String> lines) {
     return lines.stream().map(Point::valueOf).toList();
+  }
+
+  private List<Line> lines(List<Point> points) {
+    List<Line> lines = new ArrayList<>();
+    for (int i = 0; i < points.size(); i++) {
+      lines.add(new Line(points.get(i), points.get((i + 1) % points.size())));
+    }
+    return lines;
+  }
+
+  private boolean cornersInside(Point a, Point b, List<Line> lines) {
+    //IO.println("Checking corners of %s, %s".formatted(a, b));
+    Point c = new Point(a.column(), b.row());
+    Point d = new Point(b.column(), a.row());
+    return inside(c, lines) && inside(d, lines);
+  }
+
+  private boolean inside(Point p, List<Line> lines) {
+    boolean x = (
+      lines.stream().anyMatch(line -> p.northOf(line)) &&
+      lines.stream().anyMatch(line -> p.eastOf(line)) &&
+      lines.stream().anyMatch(line -> p.southOf(line)) &&
+      lines.stream().anyMatch(line -> p.westOf(line)));
+    //IO.println("checking if %s inside: %s".formatted(p, x));
+    return x;
   }
 
 
