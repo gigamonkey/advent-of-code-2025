@@ -9,7 +9,6 @@ import static java.util.stream.Gatherers.*;
 
 import module java.base;
 
-
 // Wrong, part 2
 
 // 4588384997 - to high
@@ -40,6 +39,12 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
 
     public boolean westOf(Line line) {
       return line.isVertical() && column >= line.column() && between(line.a().row(), row, line.b().row());
+    }
+
+    public Point toward(Point other) {
+      long dr = signum(other.row - row);
+      long dc = signum(other.column - column);
+      return new Point(column + dc, row + dr);
     }
   }
 
@@ -81,7 +86,11 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
 
   public Long part2(List<String> input) {
     long max = 0;
+
+
     List<Point> points = points(input);
+    IO.println(points.stream().mapToLong(Point::row).summaryStatistics());
+    IO.println(points.stream().mapToLong(Point::column).summaryStatistics());
     List<Line> lines = lines(points);
     for (int i = 0; i < points.size() - 1; i++) {
       for (int j = i + 1; j < points.size(); j++) {
@@ -112,6 +121,19 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
     Point c = new Point(a.column(), b.row());
     Point d = new Point(b.column(), a.row());
     return inside(c, lines) && inside(d, lines);
+  }
+
+  private boolean cornersNeighborsInside(Point a, Point b, List<Line> lines) {
+    //IO.println("Checking corners of %s, %s".formatted(a, b));
+    Point c = new Point(a.column(), b.row());
+    Point d = new Point(b.column(), a.row());
+    return (
+      inside(c, lines) &&
+      inside(d, lines) &&
+      inside(c.toward(a), lines) &&
+      inside(c.toward(b), lines) &&
+      inside(d.toward(a), lines) &&
+      inside(d.toward(b), lines));
   }
 
   private boolean linesInside(Point a, Point b, List<Line> lines) {
