@@ -1,6 +1,7 @@
 package net.berkeley.peterseibel;
 
 import static java.lang.Long.parseLong;
+import static java.lang.Long.signum;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
@@ -82,13 +83,11 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
     long max = 0;
     List<Point> points = points(input);
     List<Line> lines = lines(points);
-
-
     for (int i = 0; i < points.size() - 1; i++) {
       for (int j = i + 1; j < points.size(); j++) {
         Point a = points.get(i);
         Point b = points.get(j);
-        if (cornersInside(a, b, lines)) {
+        if (cornersInside(a, b, lines) && linesInside(a, b, lines)) {
           max = Math.max(max, points.get(i).area(points.get(j)));
         }
       }
@@ -114,6 +113,33 @@ public class Day09_MovieTheater extends Solution<List<String>, Long> {
     Point d = new Point(b.column(), a.row());
     return inside(c, lines) && inside(d, lines);
   }
+
+  private boolean linesInside(Point a, Point b, List<Line> lines) {
+    //IO.println("Checking corners of %s, %s".formatted(a, b));
+    Point c = new Point(a.column(), b.row());
+    Point d = new Point(b.column(), a.row());
+
+    return (
+      lineInside(new Line(a, c), lines) &&
+      lineInside(new Line(c, b), lines) &&
+      lineInside(new Line(b, d), lines) &&
+      lineInside(new Line(d, a), lines));
+  }
+
+  private boolean lineInside(Line line, List<Line> lines) {
+    long dr = signum(line.b().row() - line.a().row());
+    long dc = signum(line.b().column() - line.a().column());
+    Point p = line.a();
+    Point end = line.b();
+    do {
+      if (!inside(p, lines)) {
+        return false;
+      }
+      p = new Point(p.column() + dc, p.row() + dr);
+    } while (!p.equals(end));
+    return true;
+  }
+
 
   private boolean inside(Point p, List<Line> lines) {
     boolean x = (
