@@ -77,7 +77,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private int minimumFor(Machine m) {
     int x = minimumFor(m.joltages(), m.buttonsAsLists());
-    IO.println("Got minimum %d for %s".formatted(x, m));
+    //IO.println("Got minimum %d for %s".formatted(x, m));
     return x;
   }
 
@@ -127,14 +127,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
         .orElseThrow();
   }
 
-  private int minPresses2(int[] joltages, int[] buttons) {
-    return bumps(buttons, joltages.length)
-        .filter(p -> Arrays.equals(joltages, p.values()))
-        .findFirst()
-        .map(Joltages::num)
-        .orElseThrow();
-  }
-
   record Presses(int num, int result) {}
 
   private Stream<Presses> presses(int[] buttons) {
@@ -149,47 +141,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     } else {
       return combos(buttons, n - 1).flatMap(a -> stream(buttons).map(b -> a ^ b));
     }
-  }
-
-  record Joltages(int num, int[] values) {
-
-    static Joltages fromButtons(int num, int size, List<Integer> buttons) {
-      int[] values = new int[size];
-      for (int b : buttons) {
-        for (int i = 0; b > 0; i++) {
-          if ((b & 1) == 1) {
-            values[i] = 1;
-          }
-          b >>= 1;
-        }
-      }
-      return new Joltages(num, values);
-    }
-  }
-
-  private Stream<Joltages> bumps(int[] buttons, int size) {
-    return IntStream.iterate(1, n -> n + 1)
-        .boxed()
-        .flatMap(n -> buttonLists(buttons, n).map(b -> Joltages.fromButtons(n, size, b)));
-  }
-
-  private Stream<List<Integer>> buttonLists(int[] buttons, int n) {
-    IO.println("Getting buttonLists for %d".formatted(n));
-    if (n == 1) {
-      return stream(buttons).mapToObj(b -> List.of(b));
-    } else {
-      return buttonLists(buttons, n - 1)
-          .flatMap(
-              list -> {
-                return stream(buttons).mapToObj(b -> listWith(list, b));
-              });
-    }
-  }
-
-  private static List<Integer> listWith(List<Integer> list, int b) {
-    var newList = new ArrayList<>(list);
-    newList.add(b);
-    return newList;
   }
 
   private List<Machine> machines(List<String> lines) {
