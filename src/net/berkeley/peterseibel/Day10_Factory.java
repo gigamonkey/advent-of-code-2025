@@ -1,6 +1,5 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
@@ -12,14 +11,18 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  record Machine(int goal, int[] buttons, int[] joltages) {
+  record Machine(int goal, int[] buttons, List<List<Integer>> buttonsAsLists, int[] joltages) {
     static Machine valueOf(String s) {
       Matcher m = pat.matcher(s);
       if (m.matches()) {
         String lights = m.group(1);
         String buttons = m.group(2);
         String joltages = m.group(3);
-        return new Machine(parseLights(lights), parseButtons(buttons), parseJoltages(joltages));
+        return new Machine(
+          parseLights(lights),
+          parseButtons(buttons),
+          parseButtonsAsLists(buttons),
+          parseJoltages(joltages));
       } else {
         throw new RuntimeException("Bad match against " + s);
       }
@@ -35,16 +38,24 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
     private static int[] parseButtons(String buttons) {
       return stream(buttons.trim().split("\\s+"))
+          .map(s -> s.substring(1, s.length() - 1))
+          .map(s -> stream(s.split(",")).mapToInt(Integer::parseInt).toArray())
+          .mapToInt(
+              nums -> {
+                int b = 0;
+                for (int n : nums) {
+                  b |= (1 << n);
+                }
+                return b;
+              })
+          .toArray();
+    }
+
+    private static List<List<Integer>> parseButtonsAsLists(String buttons) {
+      return stream(buttons.trim().split("\\s+"))
         .map(s -> s.substring(1, s.length() - 1))
-        .map(s -> stream(s.split(",")).mapToInt(Integer::parseInt).toArray())
-        .mapToInt(nums -> {
-            int b = 0;
-            for (int n : nums) {
-              b |= (1 << n);
-            }
-            return b;
-          })
-        .toArray();
+        .map(s -> stream(s.split(",")).map(Integer::valueOf).toList())
+        .toList();
     }
 
     private static int[] parseJoltages(String joltages) {
@@ -61,24 +72,75 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    long count = 0;
-    return count;
+    return machines(lines).stream().mapToLong(this::minimumFor).sum();
   }
 
+  private int minimumFor(Machine m) {
+    int x = minimumFor(m.joltages(), m.buttonsAsLists());
+    IO.println("Got minimum %d for %s".formatted(x, m));
+    return x;
+  }
+
+  private int minimumFor(int[] joltages, List<List<Integer>> buttons) {
+    if (zero(joltages)) {
+      return 0;
+    } else if (negative(joltages) || buttons.isEmpty()) {
+      return -1;
+    } else {
+      int with = minimumFor(subtract(joltages, buttons.get(0)), buttons);
+      int without = minimumFor(joltages, buttons.subList(1, buttons.size()));
+
+      if (with == -1) {
+        return without;
+      } else if (without == -1) {
+        return 1 + with;
+      } else {
+        return min(1 + with, without);
+      }
+    }
+  }
+
+  private boolean zero(int[] ints) {
+    return stream(ints).allMatch(n -> n == 0);
+  }
+
+  private boolean negative(int[] ints) {
+    return stream(ints).anyMatch(n -> n < 0);
+  }
+
+  private int[] subtract(int[] ints, List<Integer> button) {
+    int[] r = Arrays.copyOf(ints, ints.length);
+    for (int b : button) {
+      r[b]--;
+    }
+    return r;
+  }
 
   private int minPresses(int goal, int[] buttons) {
-    // try all the one button presses, then all the two button presses, etc.
-    // until we get to the goal.
-    return presses(buttons).filter(p -> p.result() == goal).findFirst().map(Presses::num).orElseThrow();
+
+
+
+    return presses(buttons)
+        .filter(p -> p.result() == goal)
+        .findFirst()
+        .map(Presses::num)
+        .orElseThrow();
+  }
+
+  private int minPresses2(int[] joltages, int[] buttons) {
+    return bumps(buttons, joltages.length)
+        .filter(p -> Arrays.equals(joltages, p.values()))
+        .findFirst()
+        .map(Joltages::num)
+        .orElseThrow();
   }
 
   record Presses(int num, int result) {}
 
   private Stream<Presses> presses(int[] buttons) {
-    return IntStream
-      .iterate(1, n -> n + 1)
-      .boxed()
-      .flatMap(n -> combos(buttons, n).mapToObj(v -> new Presses(n, v)));
+    return IntStream.iterate(1, n -> n + 1)
+        .boxed()
+        .flatMap(n -> combos(buttons, n).mapToObj(v -> new Presses(n, v)));
   }
 
   private IntStream combos(int[] buttons, int n) {
@@ -87,6 +149,47 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     } else {
       return combos(buttons, n - 1).flatMap(a -> stream(buttons).map(b -> a ^ b));
     }
+  }
+
+  record Joltages(int num, int[] values) {
+
+    static Joltages fromButtons(int num, int size, List<Integer> buttons) {
+      int[] values = new int[size];
+      for (int b : buttons) {
+        for (int i = 0; b > 0; i++) {
+          if ((b & 1) == 1) {
+            values[i] = 1;
+          }
+          b >>= 1;
+        }
+      }
+      return new Joltages(num, values);
+    }
+  }
+
+  private Stream<Joltages> bumps(int[] buttons, int size) {
+    return IntStream.iterate(1, n -> n + 1)
+        .boxed()
+        .flatMap(n -> buttonLists(buttons, n).map(b -> Joltages.fromButtons(n, size, b)));
+  }
+
+  private Stream<List<Integer>> buttonLists(int[] buttons, int n) {
+    IO.println("Getting buttonLists for %d".formatted(n));
+    if (n == 1) {
+      return stream(buttons).mapToObj(b -> List.of(b));
+    } else {
+      return buttonLists(buttons, n - 1)
+          .flatMap(
+              list -> {
+                return stream(buttons).mapToObj(b -> listWith(list, b));
+              });
+    }
+  }
+
+  private static List<Integer> listWith(List<Integer> list, int b) {
+    var newList = new ArrayList<>(list);
+    newList.add(b);
+    return newList;
   }
 
   private List<Machine> machines(List<String> lines) {
