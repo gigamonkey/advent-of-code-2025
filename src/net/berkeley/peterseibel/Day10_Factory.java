@@ -11,7 +11,8 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  record Machine(int goal, int[] buttons, List<List<Integer>> buttonsAsLists, int[] joltages) {
+  record Machine(
+      int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
     static Machine valueOf(String s) {
       Matcher m = pat.matcher(s);
       if (m.matches()) {
@@ -19,10 +20,10 @@ public class Day10_Factory extends Solution<List<String>, Long> {
         String buttons = m.group(2);
         String joltages = m.group(3);
         return new Machine(
-          parseLights(lights),
-          parseButtons(buttons),
-          parseButtonsAsLists(buttons),
-          parseJoltages(joltages));
+            parseLights(lights),
+            parseButtons(buttons),
+            parseButtonsAsLists(buttons),
+            parseJoltages(joltages));
       } else {
         throw new RuntimeException("Bad match against " + s);
       }
@@ -53,13 +54,13 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
     private static List<List<Integer>> parseButtonsAsLists(String buttons) {
       return stream(buttons.trim().split("\\s+"))
-        .map(s -> s.substring(1, s.length() - 1))
-        .map(s -> stream(s.split(",")).map(Integer::valueOf).toList())
-        .toList();
+          .map(s -> s.substring(1, s.length() - 1))
+          .map(s -> stream(s.split(",")).map(Integer::valueOf).toList())
+          .toList();
     }
 
-    private static int[] parseJoltages(String joltages) {
-      return stream(joltages.split(",")).mapToInt(Integer::parseInt).toArray();
+    private static List<Integer> parseJoltages(String joltages) {
+      return stream(joltages.split(",")).map(Integer::parseInt).toList();
     }
   }
 
@@ -76,50 +77,63 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private int minimumFor(Machine m) {
-    int x = minimumFor(m.joltages(), m.buttonsAsLists());
-    //IO.println("Got minimum %d for %s".formatted(x, m));
+    int x = minimumFor(m.joltages(), m.buttonsAsLists(), new HashMap<>());
+    IO.println("Got minimum %d for %s".formatted(x, m));
     return x;
   }
 
-  private int minimumFor(int[] joltages, List<List<Integer>> buttons) {
-    if (zero(joltages)) {
-      return 0;
-    } else if (negative(joltages) || buttons.isEmpty()) {
-      return -1;
-    } else {
-      int with = minimumFor(subtract(joltages, buttons.get(0)), buttons);
-      int without = minimumFor(joltages, buttons.subList(1, buttons.size()));
+  record MemoKey(List<Integer> joltages, int numButtons) {}
 
-      if (with == -1) {
-        return without;
-      } else if (without == -1) {
-        return 1 + with;
+  private int minimumFor(
+      List<Integer> joltages, List<List<Integer>> buttons, Map<MemoKey, Integer> memo) {
+    var k = new MemoKey(joltages, buttons.size());
+    if (!memo.containsKey(k)) {
+      int result;
+
+      if (zero(joltages)) {
+        result = 0;
+
+      } else if (negative(joltages) || buttons.isEmpty()) {
+        result = -1;
+
       } else {
-        return min(1 + with, without);
+
+        int with = minimumFor(subtract(joltages, buttons.get(0)), buttons, memo);
+        int without = minimumFor(joltages, buttons.subList(1, buttons.size()), memo);
+
+        if (with == -1) {
+          result = without;
+        } else if (without == -1) {
+          result = 1 + with;
+        } else {
+          result = min(1 + with, without);
+        }
       }
+      // IO.println("Memozing %s -> %d".formatted(k, result));
+      memo.put(k, result);
+    } else {
+      // IO.println("Memo hit %s".formatted(k));
     }
+    return memo.get(k);
   }
 
-  private boolean zero(int[] ints) {
-    return stream(ints).allMatch(n -> n == 0);
+  private boolean zero(List<Integer> ints) {
+    return ints.stream().allMatch(n -> n == 0);
   }
 
-  private boolean negative(int[] ints) {
-    return stream(ints).anyMatch(n -> n < 0);
+  private boolean negative(List<Integer> ints) {
+    return ints.stream().anyMatch(n -> n < 0);
   }
 
-  private int[] subtract(int[] ints, List<Integer> button) {
-    int[] r = Arrays.copyOf(ints, ints.length);
+  private List<Integer> subtract(List<Integer> ints, List<Integer> button) {
+    List<Integer> r = new ArrayList<>(ints);
     for (int b : button) {
-      r[b]--;
+      r.set(b, r.get(b) - 1);
     }
     return r;
   }
 
   private int minPresses(int goal, int[] buttons) {
-
-
-
     return presses(buttons)
         .filter(p -> p.result() == goal)
         .findFirst()
