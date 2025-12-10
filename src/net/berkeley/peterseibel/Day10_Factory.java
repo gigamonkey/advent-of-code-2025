@@ -57,18 +57,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    long count = 0;
-    var machines = machines(lines);
-
-    for (Machine m : machines) {
-      IO.println(Integer.toBinaryString(m.goal()));
-      IO.println(Arrays.toString(m.buttons()));
-      IO.println(Arrays.toString(m.joltages()));
-    }
-
-    IO.println(presses(machines.get(0).buttons()).limit(10).toList());
-
-    return machines.stream().mapToLong(m -> minPresses(m.goal(), m.buttons())).sum();
+    return machines(lines).stream().mapToLong(m -> minPresses(m.goal(), m.buttons())).sum();
   }
 
   public Long part2(List<String> lines) {
