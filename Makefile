@@ -16,7 +16,7 @@ $(solutions): make-solutions.sh $(solution_classes)
 	./make-solutions.sh > $@
 
 run:
-	java -cp classes -ea $(MAIN_CLASS)
+	java -cp classes -ea -Xmx64g $(MAIN_CLASS) $(DAY)
 
 run_all:
 	java -cp classes $(MAIN_CLASS) --all
