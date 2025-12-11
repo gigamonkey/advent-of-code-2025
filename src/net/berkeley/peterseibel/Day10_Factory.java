@@ -1,7 +1,9 @@
 package net.berkeley.peterseibel;
 
+import static java.util.stream.IntStream.range;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
+import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
 
@@ -11,8 +13,8 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  record Machine(
-      int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
+  record Machine(int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
+
     static Machine valueOf(String s) {
       Matcher m = pat.matcher(s);
       if (m.matches()) {
@@ -78,9 +80,10 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     return machines(lines).stream()
         .mapToLong(
             m -> {
+              IO.println("Machine %s".formatted(m));
               // return semiStream(m.joltages(), m.buttonsAsLists());
               int x = minimumWith(m.joltages(), m.buttonsAsLists());
-              IO.println("Machine %s: %d".formatted(m, x));
+              IO.println("got: %d".formatted(x));
               return x;
             })
         .sum();
@@ -163,51 +166,92 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     }
   }
 
-  private int minimumWith(List<Integer> goal, List<List<Integer>> buttons) {
-    return minimumWith(0, goal, Map.of(), buttons);
+  private List<Integer> indexesByButtons(int size, List<List<Integer>> buttons) {
+    List<Integer> idxs = new ArrayList<>(range(0, size).boxed().toList());
+    //idxs.sort(comparingInt(i -> countButtons(i, buttons)));
+    return idxs;
   }
 
-  private int minimumWith(
-      int i, List<Integer> goal, Map<Integer, Integer> assigned, List<List<Integer>> buttons) {
-    if (i == goal.size()) {
-      return sumAssignments(assigned);
-    } else {
 
-      int joltage = goal.get(i);
+  private int minimumWith(List<Integer> goal, List<List<Integer>> buttons) {
+    IO.println("goal: %s".formatted(goal));
+    List<Integer> indices = indexesByButtons(goal.size(), buttons);
+    IO.println("sorted indexes: %s".formatted(indices));
+    return minimumWith(indices, goal, Map.of(), buttons).orElseThrow();
+  }
+
+  private OptionalInt minimumWith(
+    List<Integer> indices, List<Integer> goal, Map<Integer, Integer> assigned, List<List<Integer>> buttons) {
+    if (indices.isEmpty()) {
+      if (assigned.keySet().size() < buttons.size()) {
+        IO.println("Returning empty: indices empty but %d < %d".formatted(assigned.keySet().size(), buttons.size()));
+        return OptionalInt.empty();
+      }
+
+      var r = OptionalInt.of(sumAssignments(assigned));
+      IO.println("Returning in base case: %s".formatted(r));
+      return r;
+    } else {
+      int idx = indices.getFirst();
+      IO.println("Processing idx %d from %s".formatted(idx, indices));
+      int joltage = goal.get(idx);
 
       // All buttons that touch this joltage
-      Set<Integer> relevantButtons = relevantButtons(i, buttons);
+      Set<Integer> relevantButtons = relevantButtons(idx, buttons);
 
       // Buttons for which we already have assigned a value, earlier in the recursion.
       Set<Integer> assignedButtons = new HashSet<>(relevantButtons);
       assignedButtons.retainAll(assigned.keySet());
 
-      // Buttons for which we need to assign a value at this stage
-      Set<Integer> withoutAssigned = new HashSet<>(relevantButtons);
-      withoutAssigned.removeAll(assigned.keySet());
-      List<Integer> toAssign = List.copyOf(withoutAssigned);
-
-      // How many clicks are needed to get this joltage to its goal
+      // How many clicks are needed to get this joltage to its goal. It can be
+      // negitive if the assignments we've already made push this over.
       int left = joltage - assignedButtons.stream().mapToInt(b -> assigned.get(b)).sum();
 
-      // All possible permutations of how we can assigning clicks to the
-      // unassigned buttons.
-      if (toAssign.size() == 0) {
-        return sumAssignments(assigned);
+      if (left < 0) {
+        IO.println("Returning empty as required total is negative: %d".formatted(left));
+        return OptionalInt.empty();
+      } else if (left == 0) {
+        int r = sumAssignments(assigned);
+        IO.println("Returning %d because joltage %d (%d) already exactly met".formatted(r, idx, joltage));
+        return OptionalInt.of(r);
+      } else {
+
+        // Buttons for which we need to assign a value at this stage
+        Set<Integer> withoutAssigned = new HashSet<>(relevantButtons);
+        withoutAssigned.removeAll(assigned.keySet());
+        List<Integer> toAssign = List.copyOf(withoutAssigned);
+
+        // All possible permutations of how we can assigning clicks to the
+        // unassigned buttons.
+        if (toAssign.size() == 0) {
+          IO.println("Returning empty because nothing to assign");
+          //return sumAssignments(assigned);
+          return OptionalInt.empty();
+        }
+
+        List<List<Integer>> possibleAssignments = sumTo(left, toAssign.size());
+
+        // Find the minimum value for each of these assignmets
+        OptionalInt min = OptionalInt.empty();
+
+        for (var nums : possibleAssignments) {
+          Map<Integer, Integer> next = newAssignments(assigned, nums, toAssign);
+          // if (sumAssignments(next) <= min) {
+          var sub = minimumWith(indices.subList(1, indices.size()), goal, next, buttons);
+
+          if (sub.isPresent()) {
+            // Gah, why doesn't OptionalInt have .map?!
+            if (min.isPresent()) {
+              min = OptionalInt.of(min(sub.getAsInt(), min.getAsInt()));
+            } else {
+              min = sub;
+            }
+          }
+          // }
+        }
+        IO.println("Returning min %s from %s".formatted(min, indices));
+        return min;
       }
-
-      List<List<Integer>> assignments = sumTo(left, toAssign.size());
-
-      // Find the minimum value for each of these assignmets
-      int min = Integer.MAX_VALUE;
-
-      for (var nums : assignments) {
-        Map<Integer, Integer> next = newAssignments(assigned, nums, toAssign);
-        // if (sumAssignments(next) <= min) {
-        min = min(min, minimumWith(i + 1, goal, next, buttons));
-        // }
-      }
-      return min;
     }
   }
 
@@ -234,6 +278,17 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     }
     return bs;
   }
+
+  private int countButtons(int j, List<List<Integer>> buttons) {
+    int count = 0;
+    for (int i = 0; i < buttons.size(); i++) {
+      if (buttons.get(i).contains(j)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
 
   private List<List<Integer>> sumTo(int total, int size) {
     return sumTo(total, size, new ArrayList<>(), new ArrayList<>());
