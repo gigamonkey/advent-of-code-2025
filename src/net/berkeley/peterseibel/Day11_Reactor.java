@@ -17,7 +17,6 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
   public Long part1(List<String> lines) {
     Map<String, List<String>> m = loadMap(lines);
     return ways("you", "out", m, topoSort(m));
-    // return p1("you", "out", loadMap(lines));
   }
 
   public Long part2OLD(List<String> lines) {
@@ -26,20 +25,29 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
 
   public Long part2(List<String> lines) {
     Map<String, List<String>> m = loadMap(lines);
-    return ways("svr", "out", m, topoSort(m));
-  }
+    List<String> sorted = topoSort(m);
 
+    long svr2fft = ways("svr", "fft", m, sorted);
+    long svr2dac = ways("svr", "dac", m, sorted);
+    long fft2dac = ways("fft", "dac", m, sorted);
+    long dac2fft = ways("dac", "fft", m, sorted);
+    long fft2out = ways("fft", "out", m, sorted);
+    long dac2out = ways("dac", "out", m, sorted);
 
-  private long p1(String from, String end, Map<String, List<String>> m) {
-    if (from.equals(end)) {
-      return 1;
+    IO.println("svr -> fft: %d".formatted(ways("svr", "fft", m, sorted)));
+    IO.println("svr -> dac: %d".formatted(ways("svr", "dac", m, sorted)));
+    IO.println("fft -> dac: %d".formatted(ways("fft", "dac", m, sorted)));
+    IO.println("dac -> fft: %d".formatted(ways("dac", "fft", m, sorted)));
+    IO.println("fft -> out: %d".formatted(ways("fft", "out", m, sorted)));
+    IO.println("dac -> out: %d".formatted(ways("dac", "out", m, sorted)));
+
+    if (fft2dac > 0) {
+      return svr2fft * fft2dac * dac2out;
     } else {
-      long c = 0;
-      for (var n : m.get(from)) {
-        c += p1(n, end, m);
-      }
-      return c;
+      return svr2dac * dac2fft * fft2out;
     }
+
+    //return ways("svr", "out", m, sorted);
   }
 
   private long p2(String from, String end, Map<String, List<String>> m, Set<String> seen, boolean fft, boolean dac) {
@@ -86,7 +94,6 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
         }
       }
     }
-    IO.println("sorted %d".formatted(sorted.size()));
     return sorted;
   }
 
