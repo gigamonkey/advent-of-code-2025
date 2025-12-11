@@ -7,7 +7,7 @@ import module java.base;
 
 public abstract class Solution<I, R> {
 
-  private static final boolean STOP = false;
+  private static final boolean STOP = true;
 
   private static final List<String> names = List.of("test", "puzzle");
   private static final List<Integer> parts = List.of(1, 2);
@@ -107,8 +107,11 @@ public abstract class Solution<I, R> {
     }
 
     private Optional<I> maybeInput(String name, int part) {
-      Optional<Path> first = part == 2 ? maybePath("%s.2.data".formatted(name)) : Optional.empty();
-      return first.or(() -> maybePath("%s.data".formatted(name))).map(inputParser);
+      return maybePath("%s.%d.override.data".formatted(name, part))
+        .or(() ->  part == 2 ? maybePath("%s.2.data".formatted(name)) : Optional.empty())
+        .or(() -> maybePath("%s.data".formatted(name)))
+        .map(x -> { IO.println(x); return x; })
+        .map(inputParser);
     }
 
     private Optional<R> maybeExpected(String name, int part) {
