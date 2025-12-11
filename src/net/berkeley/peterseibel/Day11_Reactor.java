@@ -1,6 +1,5 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
@@ -19,46 +18,21 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
     return ways("you", "out", m, topoSort(m));
   }
 
-  public Long part2OLD(List<String> lines) {
-    return p2("svr", "out", loadMap(lines), new HashSet<String>(), false, false);
-  }
-
   public Long part2(List<String> lines) {
     Map<String, List<String>> m = loadMap(lines);
     List<String> sorted = topoSort(m);
 
-    long svr2fft = ways("svr", "fft", m, sorted);
-    long svr2dac = ways("svr", "dac", m, sorted);
     long fft2dac = ways("fft", "dac", m, sorted);
-    long dac2fft = ways("dac", "fft", m, sorted);
-    long fft2out = ways("fft", "out", m, sorted);
-    long dac2out = ways("dac", "out", m, sorted);
-
-    IO.println("svr -> fft: %d".formatted(ways("svr", "fft", m, sorted)));
-    IO.println("svr -> dac: %d".formatted(ways("svr", "dac", m, sorted)));
-    IO.println("fft -> dac: %d".formatted(ways("fft", "dac", m, sorted)));
-    IO.println("dac -> fft: %d".formatted(ways("dac", "fft", m, sorted)));
-    IO.println("fft -> out: %d".formatted(ways("fft", "out", m, sorted)));
-    IO.println("dac -> out: %d".formatted(ways("dac", "out", m, sorted)));
 
     if (fft2dac > 0) {
+      long svr2fft = ways("svr", "fft", m, sorted);
+      long dac2out = ways("dac", "out", m, sorted);
       return svr2fft * fft2dac * dac2out;
     } else {
+      long svr2dac = ways("svr", "dac", m, sorted);
+      long dac2fft = ways("dac", "fft", m, sorted);
+      long fft2out = ways("fft", "out", m, sorted);
       return svr2dac * dac2fft * fft2out;
-    }
-
-    //return ways("svr", "out", m, sorted);
-  }
-
-  private long p2(String from, String end, Map<String, List<String>> m, Set<String> seen, boolean fft, boolean dac) {
-    if (from == end) {
-      return fft && dac ? 1 : 0;
-    } else {
-      long c = 0;
-      for (var n : m.get(from)) {
-        c += p2(n, end, m, seen, fft || n == "fft", dac || n == "dac");
-      }
-      return c;
     }
   }
 
@@ -69,7 +43,6 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
         indegree.merge(n, 1, (a, b) -> a + b);
       }
     }
-
     return indegree;
   }
 
@@ -83,11 +56,12 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
       }
     }
 
+    // Pull items from queue to add to sorted list and decrement the indegree of
+    // their neighbors.
     List<String> sorted = new ArrayList<>();
     while (!queue.isEmpty()) {
       String n = queue.remove();
       sorted.add(n);
-
       for (var o : m.getOrDefault(n, List.of())) {
         if (indegree.computeIfPresent(o, (_, v) -> v - 1) == 0) {
           queue.add(o);
@@ -109,11 +83,9 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
     return ways.get(end);
   }
 
-
-
   private Map<String, List<String>> loadMap(List<String> lines) {
     Map<String, List<String>> m = new HashMap<>();
-    for (var line: lines) {
+    for (var line : lines) {
       int colon = line.indexOf(":");
       String from = line.substring(0, colon).intern();
       List<String> to = stream(line.substring(colon + 2).split(" ")).map(String::intern).toList();
@@ -121,20 +93,4 @@ public class Day11_Reactor extends Solution<List<String>, Long> {
     }
     return m;
   }
-
-
 }
-
-// svr -> fft = 1
-// fft -> out = 4
-// fft -> dac = 2
-// dac -> fft = 0
-// svr -> dac = 4
-// dac -> out = 4
-
-
-// if dac -> fft > 0: svr -> dac * dac -> fft * fft -> out
-// else: svr -> fft * fft -> dac * dac -> out
-
-// Ways from svr -> dac * dac ->
-// Ways from
