@@ -105,7 +105,8 @@ public abstract class Solution<I, R> {
     }
 
     private Optional<I> maybeInput(String name, int part) {
-      return maybePath("%s.data".formatted(name)).map(inputParser);
+      Optional<Path> first = part == 2 ? maybePath("%s.2.data".formatted(name)) : Optional.empty();
+      return first.or(() -> maybePath("%s.data".formatted(name))).map(inputParser);
     }
 
     private Optional<R> maybeExpected(String name, int part) {
