@@ -7,6 +7,8 @@ import module java.base;
 
 public abstract class Solution<I, R> {
 
+  private static final boolean STOP = false;
+
   private static final List<String> names = List.of("test", "puzzle");
   private static final List<Integer> parts = List.of(1, 2);
 
@@ -93,7 +95,7 @@ public abstract class Solution<I, R> {
     }
 
     private Result stop(String emoji, String detail) {
-      return new Result(false, msg(emoji, detail));
+      return new Result(!STOP, msg(emoji, detail));
     }
 
     private String msg(String emoji, String detail) {
