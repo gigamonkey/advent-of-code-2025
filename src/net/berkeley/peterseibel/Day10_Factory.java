@@ -73,26 +73,22 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    //return machines(lines).stream().mapToLong(m -> minJoltagePresses(m.joltages(), m.buttonsAsLists())).sum();
-    return machines(lines).stream().mapToLong(m -> {
-        //return semiStream(m.joltages(), m.buttonsAsLists());
-        int x = minimumWith(m.joltages(), m.buttonsAsLists());
-        IO.println("Machine %s: %d".formatted(m, x));
-        return x;
-      }).sum();
+    // return machines(lines).stream().mapToLong(m -> minJoltagePresses(m.joltages(),
+    // m.buttonsAsLists())).sum();
+    return machines(lines).stream()
+        .mapToLong(
+            m -> {
+              // return semiStream(m.joltages(), m.buttonsAsLists());
+              int x = minimumWith(m.joltages(), m.buttonsAsLists());
+              IO.println("Machine %s: %d".formatted(m, x));
+              return x;
+            })
+        .sum();
   }
-
-
-
-
-
-
 
   record MemoKey(List<Integer> joltages, int numButtons) {}
 
-
   // Find solutions for each joltage level independently? Gets a List
-
 
   private int minimumForJoltages(
       List<Integer> joltages, List<List<Integer>> buttons, Map<MemoKey, Integer> memo) {
@@ -172,11 +168,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private int minimumWith(
-    int i,
-    List<Integer> goal,
-    Map<Integer, Integer> assigned,
-    List<List<Integer>> buttons
-  ) {
+      int i, List<Integer> goal, Map<Integer, Integer> assigned, List<List<Integer>> buttons) {
     if (i == goal.size()) {
       return sumAssignments(assigned);
     } else {
@@ -211,9 +203,9 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
       for (var nums : assignments) {
         Map<Integer, Integer> next = newAssignments(assigned, nums, toAssign);
-        //if (sumAssignments(next) <= min) {
-          min = min(min, minimumWith(i + 1, goal, next, buttons));
-          //}
+        // if (sumAssignments(next) <= min) {
+        min = min(min, minimumWith(i + 1, goal, next, buttons));
+        // }
       }
       return min;
     }
@@ -224,10 +216,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private Map<Integer, Integer> newAssignments(
-    Map<Integer, Integer> assigned,
-    List<Integer> nums,
-    List<Integer> toAssign
-  ) {
+      Map<Integer, Integer> assigned, List<Integer> nums, List<Integer> toAssign) {
     // Make a new assigned maps for our recursive call
     Map<Integer, Integer> next = new HashMap<>(assigned);
     for (int i = 0; i < toAssign.size(); i++) {
@@ -235,7 +224,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     }
     return next;
   }
-
 
   private Set<Integer> relevantButtons(int j, List<List<Integer>> buttons) {
     Set<Integer> bs = new HashSet<>();
@@ -251,7 +239,8 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     return sumTo(total, size, new ArrayList<>(), new ArrayList<>());
   }
 
-  private List<List<Integer>> sumTo(int left, int remainingSize, List<Integer> soFar, List<List<Integer>> results) {
+  private List<List<Integer>> sumTo(
+      int left, int remainingSize, List<Integer> soFar, List<List<Integer>> results) {
     if (remainingSize == 0) {
       throw new Error("remaining size zero");
     }
@@ -269,12 +258,14 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     return results;
   }
 
-
-
-
   private int semiStream(List<Integer> goal, List<List<Integer>> buttons) {
     // One-press results
-    List<int[]> soFar = new ArrayList<>(buttons.stream().map(b -> newJoltageCounts(b, goal.size())).filter(j -> !tooHigh(j, goal)).toList());
+    List<int[]> soFar =
+        new ArrayList<>(
+            buttons.stream()
+                .map(b -> newJoltageCounts(b, goal.size()))
+                .filter(j -> !tooHigh(j, goal))
+                .toList());
     int n = 1;
     if (soFar.stream().anyMatch(j -> justRight(j, goal))) {
       return n;
@@ -284,7 +275,12 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private int semiStream(List<Integer> goal, List<List<Integer>> buttons, List<int[]> prev, int n) {
-    List<int[]> soFar = new ArrayList<>(prev.stream().flatMap(j -> buttons.stream().map(b -> combineJoltageCounts(j, b))).filter(j -> !tooHigh(j, goal)).toList());
+    List<int[]> soFar =
+        new ArrayList<>(
+            prev.stream()
+                .flatMap(j -> buttons.stream().map(b -> combineJoltageCounts(j, b)))
+                .filter(j -> !tooHigh(j, goal))
+                .toList());
     prev.clear();
     IO.println("semiStream depth %d soFar.size: %d".formatted(n, soFar.size()));
     if (soFar.stream().anyMatch(j -> justRight(j, goal))) {
@@ -294,31 +290,35 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     }
   }
 
-
   private int minJoltagePresses(List<Integer> goal, List<List<Integer>> buttons) {
     return joltagePresses(buttons, goal)
-      .filter(p -> justRight(p.joltages(), goal))
-      .findFirst()
-      .map(JoltagePresses::num)
-      .orElseThrow();
+        .filter(p -> justRight(p.joltages(), goal))
+        .findFirst()
+        .map(JoltagePresses::num)
+        .orElseThrow();
   }
 
   record JoltagePresses(int num, int[] joltages) {}
 
-
   private Stream<JoltagePresses> joltagePresses(List<List<Integer>> buttons, List<Integer> goal) {
     return IntStream.iterate(1, n -> n + 1)
-      .boxed()
-      .flatMap(n -> combos2(buttons, goal, n).map(j -> new JoltagePresses(n, j)));
+        .boxed()
+        .flatMap(n -> combos2(buttons, goal, n).map(j -> new JoltagePresses(n, j)));
   }
-
 
   private Stream<int[]> combos2(List<List<Integer>> buttons, List<Integer> goal, int n) {
     IO.println("Checking %d press combos".formatted(n));
     if (n == 1) {
-      return buttons.stream().map(b -> newJoltageCounts(b, goal.size())).filter(j -> !tooHigh(j, goal));
+      return buttons.stream()
+          .map(b -> newJoltageCounts(b, goal.size()))
+          .filter(j -> !tooHigh(j, goal));
     } else {
-      return combos2(buttons, goal, n - 1).flatMap(counts -> buttons.stream().map(b -> combineJoltageCounts(counts, b)).filter(j -> !tooHigh(j, goal)));
+      return combos2(buttons, goal, n - 1)
+          .flatMap(
+              counts ->
+                  buttons.stream()
+                      .map(b -> combineJoltageCounts(counts, b))
+                      .filter(j -> !tooHigh(j, goal)));
     }
   }
 
@@ -330,7 +330,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     return IntStream.range(0, joltages.length).allMatch(i -> joltages[i] == goal.get(i));
   }
 
-
   private int[] newJoltageCounts(List<Integer> button, int size) {
     int[] joltages = new int[size];
     for (int b : button) {
@@ -341,7 +340,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private int[] combineJoltageCounts(int[] joltages, List<Integer> button) {
     int[] newJoltages = Arrays.copyOf(joltages, joltages.length);
-    for (int b: button) {
+    for (int b : button) {
       newJoltages[b]++;
     }
     return newJoltages;
