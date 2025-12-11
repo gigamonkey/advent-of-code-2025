@@ -107,15 +107,19 @@ public abstract class Solution<I, R> {
     }
 
     private Optional<I> maybeInput(String name, int part) {
-      return maybePath("%s.%d.override.data".formatted(name, part))
-        .or(() ->  part == 2 ? maybePath("%s.2.data".formatted(name)) : Optional.empty())
-        .or(() -> maybePath("%s.data".formatted(name)))
-        .map(x -> { IO.println(x); return x; })
+      return firstExisting(
+        "%s.%d.override.data".formatted(name, part),
+        "%s.%d.data".formatted(name, part),
+        "%s.data".formatted(name))
         .map(inputParser);
     }
 
     private Optional<R> maybeExpected(String name, int part) {
-      return maybePath("%s.part%d.expected".formatted(name, part)).map(expectedParser);
+      return firstExisting("%s.part%d.expected".formatted(name, part)).map(expectedParser);
+    }
+
+    private Optional<Path> firstExisting(String... names) {
+      return Arrays.stream(names).map(this::maybePath).flatMap(Optional::stream).findFirst();
     }
   }
 }
