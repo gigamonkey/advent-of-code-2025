@@ -18,7 +18,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    Spec spec = parseInput(lines);
+    Spec spec = new Spec(lines);
     return spec.spaces.stream().filter(s -> s.solve(spec.shapes)).count();
   }
 
@@ -62,6 +62,16 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
       return transformations.length;
     }
 
+    public int squaresFilled() {
+      int filled = 0;
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          if (map[i][j] == '#') filled++;
+        }
+      }
+      return filled;
+    }
+
     public char[][] transform(int n) {
       int[][] t = transformations[n];
       char[][] transformed = new char[3][3];
@@ -75,10 +85,41 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
     }
   }
 
-  private record Space(int rows, int cols, int[] presents) {
+  private static class Space {
+
+    private final int rows;
+    private final int cols;
+    private final int[] presents;
+    private final List<Shape> shapes;
+    private final char[][] grid;
+    private final int squaresNeeded;
+
+    private int presentsLeft;
+    private int squaresLeft;
+
+    Space(int rows, int cols, int[] presents, List<Shape> shapes) {
+      this.rows = rows;
+      this.cols = cols;
+      this.presents = presents;
+      this.shapes = shapes;
+      this.grid = new char[rows][cols];
+      this.squaresNeeded = needed(presents, shapes);
+      this.presentsLeft = stream(presents).sum();
+      this.squaresLeft = rows * cols;
+    }
+
+    private static int needed(int[] presents, List<Shape> shapes) {
+      int needed = 0;
+      for (int i = 0; i < presents.length; i++) {
+        if (presents[i] > 0) {
+          needed += presents[i] * shapes.get(i).squaresFilled();
+        }
+      }
+      return needed;
+    }
 
     int positions() {
-      return (rows() - 2) * (cols - 2);
+      return (rows - 2) * (cols - 2);
     }
 
     boolean solve(List<Shape> shapes) {
@@ -87,15 +128,17 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
           "Solving %dx%d space with presents: %s"
           .formatted(rows, cols, Arrays.toString(presents)));
       char[][] grid = new char[rows][cols];
-      return fillPosition(0, grid, shapes, stream(presents).sum());
+      return fillPosition(0, grid, shapes);
     }
 
-    boolean fillPosition(int p, char[][] grid, List<Shape> shapes, int presentsLeft) {
+    boolean fillPosition(int p, char[][] grid, List<Shape> shapes) {
       if (verbose)
         IO.println("Fill position %d presents %s".formatted(p, Arrays.toString(presents)));
       if (stream(presents).allMatch(n -> n == 0)) {
         return true;
       } else if (positions() - p < presentsLeft) {
+        return false;
+      } else if (squaresLeft < squaresNeeded) {
         return false;
       } else {
         // Try each of the shapes (in all transformations) in the current position.
@@ -107,7 +150,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
             if (verbose)
               IO.println(
                   "Decrmemented presents %d presents %s".formatted(i, Arrays.toString(presents)));
-            if (placeShape(shape, p, grid, shapes, presentsLeft)) {
+            if (placeShape(shape, p, grid, shapes)) {
               if (verbose) {
                 IO.println("Placed shape at %d".formatted(p));
                 dumpGrid(grid);
@@ -125,18 +168,19 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
         }
         // Didn't find a solution with anything in the current position so maybe
         // we can solve it with nothing in this position.
-        return fillPosition(p + 1, grid, shapes, presentsLeft);
+        return fillPosition(p + 1, grid, shapes);
       }
     }
 
-    boolean placeShape(Shape shape, int p, char[][] grid, List<Shape> shapes, int presentsLeft) {
+    boolean placeShape(Shape shape, int p, char[][] grid, List<Shape> shapes) {
       for (int t = 0; t < shape.numTransformations(); t++) {
         if (placeTransformedShape(shape, p, t, grid)) {
           if (verbose) {
             IO.println("Placed transformed shape %d at %d".formatted(t, p));
             dumpGrid(grid);
           }
-          if (fillPosition(p + 1, grid, shapes, presentsLeft)) {
+          //squaresLeft -= shape.squaresFilled();
+          if (fillPosition(p + 1, grid, shapes)) {
             return true;
           } else {
             if (greedy) {
@@ -178,6 +222,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
       // be able to put another shape in that position (except maybe a shape
       // that's the inverse of the one fit.)
       markTransformedShape(chars, r, c, grid, greedy ? '.' : (char) 0);
+      //squaresLeft += shape.squaresFilled();
     }
 
     boolean fits(char[][] chars, int r, int c, char[][] grid) {
@@ -205,34 +250,38 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
   private static class Spec {
     List<Shape> shapes = new ArrayList<>();
     List<Space> spaces = new ArrayList<>();
-  }
+    final int squaresNeeded;
 
-  private static Spec parseInput(List<String> lines) {
-    Spec spec = new Spec();
+    public Spec(List<String> lines) {
+      int needed = 0;
+      boolean inPresents = true;
 
-    boolean inPresents = true;
 
-    List<String> shapeLines = new ArrayList<>();
+      List<String> shapeLines = new ArrayList<>();
 
-    for (String line : lines) {
-      if (line.matches("\\d+:")) {
-      } else if (line.matches("[#\\.]+")) {
-        shapeLines.add(line);
-      } else if (line.equals("") && !shapeLines.isEmpty()) {
-        spec.shapes.add(Shape.from(shapeLines));
-        shapeLines.clear();
-      } else {
-        int x = line.indexOf("x");
-        int colon = line.indexOf(":");
-        int rows = parseInt(line.substring(0, x));
-        int cols = parseInt(line.substring(x + 1, colon));
-        int[] presents =
+      for (String line : lines) {
+        if (line.matches("\\d+:")) {
+        } else if (line.matches("[#\\.]+")) {
+          shapeLines.add(line);
+        } else if (line.equals("") && !shapeLines.isEmpty()) {
+          Shape s = Shape.from(shapeLines);
+          shapes.add(s);
+          needed += s.squaresFilled();
+          shapeLines.clear();
+        } else {
+          int x = line.indexOf("x");
+          int colon = line.indexOf(":");
+          int rows = parseInt(line.substring(0, x));
+          int cols = parseInt(line.substring(x + 1, colon));
+          int[] presents =
             stream(line.substring(colon + 2).split(" ")).mapToInt(Integer::parseInt).toArray();
-        spec.spaces.add(new Space(rows, cols, presents));
+          spaces.add(new Space(rows, cols, presents, shapes));
+        }
       }
+      squaresNeeded = needed;
     }
-    return spec;
   }
+
 
   private static void dumpGrid(char[][] chars) {
     for (char[] row : chars) {
