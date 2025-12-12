@@ -108,10 +108,10 @@ public abstract class Solution<I, R> {
 
     private Optional<I> maybeInput(String name, int part) {
       return firstExisting(
-        "%s.%d.override.data".formatted(name, part),
-        "%s.%d.data".formatted(name, part),
-        "%s.data".formatted(name))
-        .map(inputParser);
+              "%s.%d.override.data".formatted(name, part),
+              "%s.%d.data".formatted(name, part),
+              "%s.data".formatted(name))
+          .map(inputParser);
     }
 
     private Optional<R> maybeExpected(String name, int part) {

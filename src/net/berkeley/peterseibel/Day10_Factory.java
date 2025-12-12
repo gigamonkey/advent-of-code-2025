@@ -1,11 +1,11 @@
 package net.berkeley.peterseibel;
 
-import static java.util.stream.IntStream.range;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
+import static java.util.stream.IntStream.range;
 
 import module java.base;
 
@@ -13,7 +13,8 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  record Machine(int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
+  record Machine(
+      int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
 
     static Machine valueOf(String s) {
       Matcher m = pat.matcher(s);
@@ -168,10 +169,9 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private List<Integer> indexesByButtons(int size, List<List<Integer>> buttons) {
     List<Integer> idxs = new ArrayList<>(range(0, size).boxed().toList());
-    //idxs.sort(comparingInt(i -> countButtons(i, buttons)));
+    // idxs.sort(comparingInt(i -> countButtons(i, buttons)));
     return idxs;
   }
-
 
   private int minimumWith(List<Integer> goal, List<List<Integer>> buttons) {
     IO.println("goal: %s".formatted(goal));
@@ -181,10 +181,15 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private OptionalInt minimumWith(
-    List<Integer> indices, List<Integer> goal, Map<Integer, Integer> assigned, List<List<Integer>> buttons) {
+      List<Integer> indices,
+      List<Integer> goal,
+      Map<Integer, Integer> assigned,
+      List<List<Integer>> buttons) {
     if (indices.isEmpty()) {
       if (assigned.keySet().size() < buttons.size()) {
-        IO.println("Returning empty: indices empty but %d < %d".formatted(assigned.keySet().size(), buttons.size()));
+        IO.println(
+            "Returning empty: indices empty but %d < %d"
+                .formatted(assigned.keySet().size(), buttons.size()));
         return OptionalInt.empty();
       }
 
@@ -212,7 +217,8 @@ public class Day10_Factory extends Solution<List<String>, Long> {
         return OptionalInt.empty();
       } else if (left == 0) {
         int r = sumAssignments(assigned);
-        IO.println("Returning %d because joltage %d (%d) already exactly met".formatted(r, idx, joltage));
+        IO.println(
+            "Returning %d because joltage %d (%d) already exactly met".formatted(r, idx, joltage));
         return OptionalInt.of(r);
       } else {
 
@@ -225,7 +231,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
         // unassigned buttons.
         if (toAssign.size() == 0) {
           IO.println("Returning empty because nothing to assign");
-          //return sumAssignments(assigned);
+          // return sumAssignments(assigned);
           return OptionalInt.empty();
         }
 
@@ -288,7 +294,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
     }
     return count;
   }
-
 
   private List<List<Integer>> sumTo(int total, int size) {
     return sumTo(total, size, new ArrayList<>(), new ArrayList<>());

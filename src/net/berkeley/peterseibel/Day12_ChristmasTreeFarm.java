@@ -1,6 +1,5 @@
 package net.berkeley.peterseibel;
 
-import static java.lang.Long.parseLong;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.*;
 import static java.util.Arrays.stream;
@@ -17,76 +16,58 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
 
     // Rotations
     {
-      { 0, 1, 2 },
-      { 3, 4, 5 },
-      { 6, 7, 8 },
+      {0, 1, 2},
+      {3, 4, 5},
+      {6, 7, 8},
     },
-
     {
-      { 6, 3, 0 },
-      { 7, 4, 1 },
-      { 8, 5, 2 }
+      {6, 3, 0},
+      {7, 4, 1},
+      {8, 5, 2}
     },
-
     {
-      { 8, 7, 6 },
-      { 5, 4, 3 },
-      { 2, 1, 0 }
+      {8, 7, 6},
+      {5, 4, 3},
+      {2, 1, 0}
     },
-
     {
-      { 2, 5, 8 },
-      { 1, 4, 7 },
-      { 0, 3, 6 }
+      {2, 5, 8},
+      {1, 4, 7},
+      {0, 3, 6}
     },
 
     // Flips
     {
-      { 2, 1, 0 },
-      { 5, 4, 3 },
-      { 8, 7, 6 }
+      {2, 1, 0},
+      {5, 4, 3},
+      {8, 7, 6}
     },
-
     {
-      { 6, 7, 8 },
-      { 3, 4, 5 },
-      { 0, 1, 2 }
+      {6, 7, 8},
+      {3, 4, 5},
+      {0, 1, 2}
     },
-
     {
-      { 8, 5, 2 },
-      { 7, 4, 1 },
-      { 6, 3, 0 }
+      {8, 5, 2},
+      {7, 4, 1},
+      {6, 3, 0}
     },
-
     {
-      { 0, 3, 6 },
-      { 1, 4, 7 },
-      { 2, 5, 8 }
+      {0, 3, 6},
+      {1, 4, 7},
+      {2, 5, 8}
     }
   };
-
 
   public Day12_ChristmasTreeFarm() {
     super(12, Data::asLines, Data::asLong);
   }
 
   public Long part1(List<String> lines) {
-
-    Spec spec = parseInput(lines);
-
-    // Shape s = Shape.from(List.of("ABC", "DEF", "GHI"));
-    // for (int n = 0; n < 8; n++) {
-    //   dump(s.transform(n));
-    //   IO.println();
-    // }
-
-    // for (int n = 0; n < 8; n++) {
-    //   dump(spec.shapes.get(4).transform(n));
-    //   IO.println();
-    // }
-
-    return spec.spaces.stream().peek(IO::println).filter(space -> space.solve(spec.shapes)).count();
+    return parseInput(lines).spaces.stream()
+        .peek(IO::println)
+        .filter(space -> space.solve(spec.shapes))
+        .count();
   }
 
   public Long part2(List<String> lines) {
@@ -106,13 +87,17 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
   private record Shape(char[][] map) {
 
     static Shape from(List<String> lines) {
-      return new Shape(lines.stream().map(line -> {
-            char[] row = new char[line.length()];
-            for (int i = 0; i < row.length; i++) {
-              row[i] = line.charAt(i);
-            }
-            return row;
-          }).toArray(char[][]::new));
+      return new Shape(
+          lines.stream()
+              .map(
+                  line -> {
+                    char[] row = new char[line.length()];
+                    for (int i = 0; i < row.length; i++) {
+                      row[i] = line.charAt(i);
+                    }
+                    return row;
+                  })
+              .toArray(char[][]::new));
     }
 
     char[][] transform(int n) {
@@ -126,8 +111,6 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
       }
       return transformed;
     }
-
-
   }
 
   private record Space(int rows, int cols, int[] presents) {
@@ -137,13 +120,17 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
     }
 
     boolean solve(List<Shape> shapes) {
-      if (verbose) IO.println("Solving %dx%d space with presents: %s".formatted(rows, cols, Arrays.toString(presents)));
+      if (verbose)
+        IO.println(
+            "Solving %dx%d space with presents: %s"
+                .formatted(rows, cols, Arrays.toString(presents)));
       char[][] grid = new char[rows][cols];
       return fillPosition(0, grid, shapes);
     }
 
     boolean fillPosition(int p, char[][] grid, List<Shape> shapes) {
-      if (verbose) IO.println("Fill position %d presents %s".formatted(p, Arrays.toString(presents)));
+      if (verbose)
+        IO.println("Fill position %d presents %s".formatted(p, Arrays.toString(presents)));
       if (stream(presents).allMatch(n -> n == 0)) {
         return true;
       } else if (p >= positions()) {
@@ -154,7 +141,9 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
           if (presents[i] > 0) {
             Shape shape = shapes.get(i);
             presents[i]--;
-            if (verbose) IO.println("Decrmemented presents %d presents %s".formatted(i, Arrays.toString(presents)));
+            if (verbose)
+              IO.println(
+                  "Decrmemented presents %d presents %s".formatted(i, Arrays.toString(presents)));
             if (placeShape(shape, p, grid, shapes)) {
               if (verbose) {
                 IO.println("Placed shape at %d".formatted(p));
@@ -164,7 +153,9 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
               return true;
             } else {
               presents[i]++;
-              if (verbose) IO.println("Incremented presents %d presents %s".formatted(i, Arrays.toString(presents)));
+              if (verbose)
+                IO.println(
+                    "Incremented presents %d presents %s".formatted(i, Arrays.toString(presents)));
             }
           }
         }
@@ -230,9 +221,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
         }
       }
     }
-
   }
-
 
   private static class Spec {
     List<Shape> shapes = new ArrayList<>();
@@ -258,11 +247,11 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
         int colon = line.indexOf(":");
         int rows = parseInt(line.substring(0, x));
         int cols = parseInt(line.substring(x + 1, colon));
-        int[] presents = stream(line.substring(colon + 2).split(" ")).mapToInt(Integer::parseInt).toArray();
+        int[] presents =
+            stream(line.substring(colon + 2).split(" ")).mapToInt(Integer::parseInt).toArray();
         spec.spaces.add(new Space(rows, cols, presents));
       }
     }
     return spec;
   }
-
 }
