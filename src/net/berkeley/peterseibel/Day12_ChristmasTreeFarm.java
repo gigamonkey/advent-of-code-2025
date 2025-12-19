@@ -125,8 +125,8 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
     boolean solve(List<Shape> shapes) {
       if (verbose)
         IO.println(
-          "Solving %dx%d space with presents: %s"
-          .formatted(rows, cols, Arrays.toString(presents)));
+            "Solving %dx%d space with presents: %s"
+                .formatted(rows, cols, Arrays.toString(presents)));
       char[][] grid = new char[rows][cols];
       return fillPosition(0, grid, shapes);
     }
@@ -179,7 +179,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
             IO.println("Placed transformed shape %d at %d".formatted(t, p));
             dumpGrid(grid);
           }
-          //squaresLeft -= shape.squaresFilled();
+          // squaresLeft -= shape.squaresFilled();
           if (fillPosition(p + 1, grid, shapes)) {
             return true;
           } else {
@@ -222,7 +222,7 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
       // be able to put another shape in that position (except maybe a shape
       // that's the inverse of the one fit.)
       markTransformedShape(chars, r, c, grid, greedy ? '.' : (char) 0);
-      //squaresLeft += shape.squaresFilled();
+      // squaresLeft += shape.squaresFilled();
     }
 
     boolean fits(char[][] chars, int r, int c, char[][] grid) {
@@ -256,7 +256,6 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
       int needed = 0;
       boolean inPresents = true;
 
-
       List<String> shapeLines = new ArrayList<>();
 
       for (String line : lines) {
@@ -274,14 +273,13 @@ public class Day12_ChristmasTreeFarm extends Solution<List<String>, Long> {
           int rows = parseInt(line.substring(0, x));
           int cols = parseInt(line.substring(x + 1, colon));
           int[] presents =
-            stream(line.substring(colon + 2).split(" ")).mapToInt(Integer::parseInt).toArray();
+              stream(line.substring(colon + 2).split(" ")).mapToInt(Integer::parseInt).toArray();
           spaces.add(new Space(rows, cols, presents, shapes));
         }
       }
       squaresNeeded = needed;
     }
   }
-
 
   private static void dumpGrid(char[][] chars) {
     for (char[] row : chars) {
