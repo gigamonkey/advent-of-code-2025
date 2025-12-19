@@ -13,7 +13,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  record Machine(
+  public record Machine(
       int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
 
     static Machine valueOf(String s) {
