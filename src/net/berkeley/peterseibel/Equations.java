@@ -172,21 +172,15 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
+      Equation zero = zeroForm();
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
 
-      for (Term t : left) {
+      for (Term t : zero.left) {
         if (t.isVariable(name)) {
           newLeft.add(t);
         } else {
           newRight.add(t.negated());
-        }
-      }
-      for (Term t : right) {
-        if (t.isVariable(name)) {
-          newLeft.add(t.negated());
-        } else {
-          newRight.add(t);
         }
       }
 
