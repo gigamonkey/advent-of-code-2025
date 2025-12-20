@@ -157,6 +157,7 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
+      IO.println("isolating " + name);
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
       for (Term t : left) {
@@ -173,7 +174,7 @@ public class Equations {
           newRight.add(t);
         }
       }
-      return new Equation(newLeft, newRight); // .simplify();
+      return new Equation(newLeft, newRight).simplify();
     }
 
     public Equation isolateFirst() {
@@ -209,7 +210,13 @@ public class Equations {
       return left.size() == 1 && left.get(0).isVariable();
     }
 
-    public String definedVariable() {
+    public boolean isTautology() {
+      // If after simplification there's nothing left it was a tautology.
+      return left.isEmpty() && right.isEmpty();
+    }
+
+
+      public String definedVariable() {
       assert isDefinition();
       if (left.get(0) instanceof Variable v) {
         return v.name();
@@ -234,6 +241,7 @@ public class Equations {
 
       return new Equation(newLeft, newRight);
     }
+
 
     private static List<Term> substituted(
         List<? extends Term> terms, String name, List<? extends Term> defn) {
@@ -300,9 +308,8 @@ public class Equations {
     return variables;
   }
 
-  private static List<Equation> buttonSums(
-      List<Integer> joltages, Map<String, List<Integer>> variables) {
-    List<Equation> eqs = new ArrayList<>();
+  private static Set<Equation> buttonSums(List<Integer> joltages, Map<String, List<Integer>> variables) {
+    Set<Equation> eqs = new HashSet<>();
     for (int i = 0; i < joltages.size(); i++) {
       eqs.add(Equation.sum(touchesJoltage(i, variables), joltages.get(i)));
     }
@@ -316,13 +323,19 @@ public class Equations {
   /**
    * Simplify list of equations down to mostly isolated variables.
    */
-  private static List<Equation> simplify(List<Equation> eqns, List<Equation> soFar) {
+  private static Set<Equation> simplify(Set<Equation> eqns, Set<Equation> soFar) {
     if (eqns.isEmpty()) {
       return soFar;
     } else {
-      Equation eq = eqns.removeLast().isolateFirst();
+      //Equation eq = eqns.removeLast().isolateFirst();
+      Equation origEq = eqns.iterator().next();
+      eqns.remove(origEq);
 
-      List<Equation> newSoFar = new ArrayList<>();
+      Equation eq = origEq.isolateFirst();
+
+      IO.println("Got isolated: " + eq + " is defn: " + eq.isDefinition());
+
+      Set<Equation> newSoFar = new HashSet<>();
       newSoFar.add(eq);
 
       if (eq.isDefinition()) {
@@ -331,9 +344,9 @@ public class Equations {
         // This list of equations has all instances of the defined variable
         // eliminated so we don't have to worry about it being chosen again
         // in the recursive call.
-        List<Equation> newEqns =
-            new ArrayList<>(eqns.stream().map(e -> e.substitute(var, defn)).toList());
-        newSoFar.addAll(soFar.stream().map(e -> e.substitute(var, defn)).toList());
+        Set<Equation> newEqns =
+          new HashSet<>(eqns.stream().map(e -> e.substitute(var, defn)).filter(e -> !e.isTautology()).toList());
+        newSoFar.addAll(soFar.stream().map(e -> e.substitute(var, defn)).filter(e -> !e.isTautology()).toList());
         return simplify(newEqns, newSoFar);
       } else {
         newSoFar.addAll(soFar);
@@ -342,7 +355,7 @@ public class Equations {
     }
   }
 
-  private static Map<String, List<? extends Term>> isolated(List<Equation> eqns) {
+  private static Map<String, List<? extends Term>> isolated(Set<Equation> eqns) {
     return eqns
       .stream()
       .filter(Equation::isDefinition)
@@ -402,18 +415,12 @@ public class Equations {
     IO.println(m);
 
     Map<String, List<Integer>> variables = buttonVariables(m.buttonsAsLists());
-    List<Equation> eqs = buttonSums(m.joltages(), variables);
+    Set<Equation> eqs = buttonSums(m.joltages(), variables);
 
     IO.println("Initial equations");
     eqs.forEach(IO::println);
 
-    // 3. Remove an equation from the original set and isolate one variable.
-    List<Equation> foo = eqs.stream().map(Equation::isolateFirst).toList();
-
-    IO.println("Isolated equations");
-    foo.forEach(IO::println);
-
-    List<Equation> newEqns = simplify(eqs, List.of());
+    Set<Equation> newEqns = simplify(eqs, Set.of());
     IO.println("Simplified equations");
     newEqns.forEach(IO::println);
 
