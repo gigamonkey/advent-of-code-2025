@@ -9,15 +9,20 @@ import static java.util.stream.IntStream.range;
 
 import module java.base;
 
+// Wrong answers:
+
+// Part 2, 18115 - too low
+//         18567 - too high
+
 public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
   public record Machine(
-      int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages) {
+    int goal, int[] buttons, List<List<Integer>> buttonsAsLists, List<Integer> joltages, String spec) {
 
-    static Machine valueOf(String s) {
-      Matcher m = pat.matcher(s);
+    static Machine valueOf(String spec) {
+      Matcher m = pat.matcher(spec);
       if (m.matches()) {
         String lights = m.group(1);
         String buttons = m.group(2);
@@ -26,9 +31,10 @@ public class Day10_Factory extends Solution<List<String>, Long> {
             parseLights(lights),
             parseButtons(buttons),
             parseButtonsAsLists(buttons),
-            parseJoltages(joltages));
+            parseJoltages(joltages),
+            spec);
       } else {
-        throw new RuntimeException("Bad match against " + s);
+        throw new RuntimeException("Bad match against " + spec);
       }
     }
 
@@ -76,7 +82,13 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    return machines(lines).stream().peek(IO::println).mapToInt(Equations::answer).mapToLong(n -> n).sum();
+    return machines(lines)
+      .stream()
+      .peek(m -> IO.println(m.spec()))
+      .mapToInt(Equations::answer)
+      .mapToLong(n -> n)
+      .peek(IO::println)
+      .sum();
   }
 
   record MemoKey(List<Integer> joltages, int numButtons) {}
@@ -396,6 +408,6 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   private List<Machine> machines(List<String> lines) {
-    return lines.stream().map(Machine::valueOf).toList();
+    return lines.stream().map(String::trim).filter(s -> !s.isEmpty()).map(Machine::valueOf).toList();
   }
 }

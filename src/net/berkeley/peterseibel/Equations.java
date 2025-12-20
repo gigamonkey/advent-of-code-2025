@@ -5,6 +5,7 @@ import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
 import static java.util.stream.IntStream.*;
+import static java.util.function.Predicate.not;
 
 import module java.base;
 
@@ -192,8 +193,8 @@ public class Equations {
 
       Equation eq = new Equation(newLeft, newRight).simplify();
       Term v = newLeft.get(0);
-      if (v.coefficient() == -1) {
-        return eq.divide(v.coefficient());
+      if (signum(v.coefficient()) == -1) {
+        return eq.divide(-1);
       } else {
         return eq;
       }
@@ -211,7 +212,7 @@ public class Equations {
 
     public Optional<Variable> firstVariable() {
       Optional<Variable> v =
-          left.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast);
+        left.stream().filter(t -> t.isVariable() && abs(t.coefficient()) == 1).findFirst().map(Variable.class::cast);
       return v.or(
           () -> right.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast));
     }
@@ -307,12 +308,20 @@ public class Equations {
           terms.stream().filter(Term::isVariable).map(Variable.class::cast).toList());
     }
 
+    public boolean isTrue(Map<String, Integer> bindings) {
+      boolean r = Term.sum(left, bindings) == Term.sum(right, bindings);
+      // IO.println("Checking " + this + " is true with  " + bindings + " ==> " + r);
+      return r;
+    }
+
     @Override
     public String toString() {
       return left.stream().map(Object::toString).collect(joining(" + "))
           + " = "
           + right.stream().map(Object::toString).collect(joining(" + "));
     }
+
+
   }
 
   private static class System {
@@ -401,6 +410,12 @@ public class Equations {
         .collect(toMap(Equation::definedVariable, Equation::right));
   }
 
+  private static Set<Equation> nonIsolated(Set<Equation> eqns) {
+    return eqns.stream()
+      .filter(not(Equation::isDefinition))
+      .collect(toSet());
+  }
+
   private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
     if (k == 1) {
       return Stream.of(List.of(sum));
@@ -442,11 +457,15 @@ public class Equations {
       Map<String, List<? extends Term>> isos, Map<String, Integer> bindings) {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
   }
-  ;
+
+  private static boolean allTrue(Set<Equation> nonIsos, Map<String, Integer> bindings) {
+    return nonIsos.stream().allMatch(e -> e.isTrue(bindings));
+  }
+
 
   public static int answer(Day10_Factory.Machine m) {
 
-    if (verbose || true) IO.println(m);
+    if (verbose) IO.println(m);
 
     Map<String, List<Integer>> variables = buttonVariables(m.buttonsAsLists());
     Set<Equation> eqs = buttonSums(m.joltages(), variables);
@@ -478,38 +497,41 @@ public class Equations {
     if (verbose) IO.println(presses);
 
     Map<String, List<? extends Term>> isos = isolated(newEqns);
+    Set<Equation> nonIsos = nonIsolated(newEqns);
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
 
     if (freeVars.isEmpty()) {
+      assert presses.right().size() == 1;
       return Term.sum(presses.right(), Map.of());
     }
 
     if (verbose) IO.println(isos);
-    if (verbose || true) IO.println(freeVars);
+    if (verbose) IO.println(freeVars);
 
     int limit =
-        freeVars.stream()
-            .map(variables::get)
-            .flatMap(b -> b.stream().map(n -> m.joltages().get(n)))
-            .mapToInt(n -> n)
-            .max()
-            .orElseThrow();
+      freeVars.stream()
+      .map(variables::get)
+      .mapToInt(b -> b.stream().map(n -> m.joltages().get(n)).mapToInt(n -> n).min().orElseThrow())
+      .sum();
+      // .max()
+      // .orElseThrow();
 
     final Equation p = presses;
 
     return bindings(freeVars, limit)
-        .filter(b -> allNonNegative(isos, b))
-        .mapToInt(b -> Term.sum(p.right(), b))
-        .min()
-        .orElseThrow();
+      .filter(b -> allNonNegative(isos, b))
+      .filter(b -> allTrue(nonIsos, b))
+      .mapToInt(b -> Term.sum(p.right(), b))
+      .min()
+      .orElseThrow();
   }
 
   public static void main() {
 
     String[] specs = {
-      "[##.##..] (1,2,3,4,6) (2,4) (0,1,3,5) (0,2,3,5) (0,1,3,4) {14,25,30,34,25,10,20}"
+      "[..##.#####] (1,3,4,6,7,9) (2,4,7,9) (0,1,2,3,5,6,7,8,9) (3,4,9) (1,2,6,8,9) (0,1,5,6,8,9) (2,5,6,8,9) (2) (2,8,9) (0,1,2) (3,4,7) (0,1,2,3,4,5,7) (3,5) {24,56,89,38,45,33,59,46,56,93}",
     };
 
     for (String spec : specs) {
