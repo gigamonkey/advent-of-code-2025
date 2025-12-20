@@ -2,10 +2,10 @@ package net.berkeley.peterseibel;
 
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
 import static java.util.stream.IntStream.*;
-import static java.util.function.Predicate.not;
 
 import module java.base;
 
@@ -212,7 +212,10 @@ public class Equations {
 
     public Optional<Variable> firstVariable() {
       Optional<Variable> v =
-        left.stream().filter(t -> t.isVariable() && abs(t.coefficient()) == 1).findFirst().map(Variable.class::cast);
+          left.stream()
+              .filter(t -> t.isVariable() && abs(t.coefficient()) == 1)
+              .findFirst()
+              .map(Variable.class::cast);
       return v.or(
           () -> right.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast));
     }
@@ -320,8 +323,6 @@ public class Equations {
           + " = "
           + right.stream().map(Object::toString).collect(joining(" + "));
     }
-
-
   }
 
   private static class System {
@@ -411,9 +412,7 @@ public class Equations {
   }
 
   private static Set<Equation> nonIsolated(Set<Equation> eqns) {
-    return eqns.stream()
-      .filter(not(Equation::isDefinition))
-      .collect(toSet());
+    return eqns.stream().filter(not(Equation::isDefinition)).collect(toSet());
   }
 
   private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
@@ -461,7 +460,6 @@ public class Equations {
   private static boolean allTrue(Set<Equation> nonIsos, Map<String, Integer> bindings) {
     return nonIsos.stream().allMatch(e -> e.isTrue(bindings));
   }
-
 
   public static int answer(Day10_Factory.Machine m) {
 
@@ -511,27 +509,30 @@ public class Equations {
     if (verbose) IO.println(freeVars);
 
     int limit =
-      freeVars.stream()
-      .map(variables::get)
-      .mapToInt(b -> b.stream().map(n -> m.joltages().get(n)).mapToInt(n -> n).min().orElseThrow())
-      .sum();
-      // .max()
-      // .orElseThrow();
+        freeVars.stream()
+            .map(variables::get)
+            .mapToInt(
+                b -> b.stream().map(n -> m.joltages().get(n)).mapToInt(n -> n).min().orElseThrow())
+            .sum();
+    // .max()
+    // .orElseThrow();
 
     final Equation p = presses;
 
     return bindings(freeVars, limit)
-      .filter(b -> allNonNegative(isos, b))
-      .filter(b -> allTrue(nonIsos, b))
-      .mapToInt(b -> Term.sum(p.right(), b))
-      .min()
-      .orElseThrow();
+        .filter(b -> allNonNegative(isos, b))
+        .filter(b -> allTrue(nonIsos, b))
+        .mapToInt(b -> Term.sum(p.right(), b))
+        .min()
+        .orElseThrow();
   }
 
   public static void main() {
 
     String[] specs = {
-      "[..##.#####] (1,3,4,6,7,9) (2,4,7,9) (0,1,2,3,5,6,7,8,9) (3,4,9) (1,2,6,8,9) (0,1,5,6,8,9) (2,5,6,8,9) (2) (2,8,9) (0,1,2) (3,4,7) (0,1,2,3,4,5,7) (3,5) {24,56,89,38,45,33,59,46,56,93}",
+      "[..##.#####] (1,3,4,6,7,9) (2,4,7,9) (0,1,2,3,5,6,7,8,9) (3,4,9) (1,2,6,8,9) (0,1,5,6,8,9)"
+          + " (2,5,6,8,9) (2) (2,8,9) (0,1,2) (3,4,7) (0,1,2,3,4,5,7) (3,5)"
+          + " {24,56,89,38,45,33,59,46,56,93}",
     };
 
     for (String spec : specs) {
