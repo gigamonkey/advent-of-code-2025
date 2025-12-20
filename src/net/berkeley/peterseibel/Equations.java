@@ -203,10 +203,37 @@ public class Equations {
       return left.size() == 1 && left.get(0).isVariable();
     }
 
+    public String definedVariable() {
+      assert isDefinition();
+      if (left.get(0) instanceof Variable v) {
+        return v.name();
+      } else {
+        throw new Error("wat");
+      }
+    }
+
     private Equation substitute(String name, List<? extends Term> defn) {
       return new Equation(substituted(left, name, defn), substituted(right, name, defn)).simplify();
     }
 
+    private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
+      if (k == 1) {
+        return Stream.of(List.of(sum));
+      } else {
+        return range(0, sum).boxed().flatMap(first -> {
+            return kTuplesWithSum(k - 1, sum - first).map(t -> {
+                List<Integer> tuple = new ArrayList<>();
+                tuple.add(first);
+                tuple.addAll(t);
+                return tuple;
+              });
+          });
+      }
+    }
+
+    private static Stream<List<Integer>> kTuples(int k) {
+      return iterate(0, n -> n + 1).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
+    }
 
     private Equation simplify() {
       List<Term> newLeft = simplifyTerms(left);
@@ -297,6 +324,9 @@ public class Equations {
     return variables.keySet().stream().filter(k -> variables.get(k).contains(i)).collect(toSet());
   }
 
+  /**
+   * Simplify list of equations down to mostly isolated variables.
+   */
   private static List<Equation> simplify(List<Equation> eqns, List<Equation> soFar) {
     if (eqns.isEmpty()) {
       return soFar;
@@ -309,6 +339,9 @@ public class Equations {
       if (eq.isDefinition()) {
         String var = eq.firstVariable().orElseThrow().name();
         var defn = eq.right();
+        // This list of equations has all instances of the defined variable
+        // eliminated so we don't have to worry about it being chosen again
+        // in the recursive call.
         List<Equation> newEqns = new ArrayList<>(eqns.stream().map(e -> e.substitute(var, defn)).toList());
         newSoFar.addAll(soFar.stream().map(e -> e.substitute(var, defn)).toList());
         return simplify(newEqns, newSoFar);
@@ -351,6 +384,13 @@ public class Equations {
 
     IO.println(presses);
 
+    for (Equation eq : newEqns) {
+      if (eq.isDefinition()) {
+        presses = presses.substitute(eq.definedVariable(), eq.right());
+      }
+    }
+
+    IO.println(presses);
 
     // 4. Eliminate that variable from all other equations in original set and in new set.
 
