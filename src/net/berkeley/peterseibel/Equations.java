@@ -172,20 +172,10 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
-      Equation zero = zeroForm();
-      List<Term> newLeft = new ArrayList<>();
-      List<Term> newRight = new ArrayList<>();
-
-      for (Term t : zero.left) {
-        if (t.isVariable(name)) {
-          newLeft.add(t);
-        } else {
-          newRight.add(t.negated());
-        }
-      }
-
-      Equation eq = new Equation(newLeft, newRight).simplify();
-      return signum(newLeft.get(0).coefficient()) == -1 ? eq.multiply(-1) : eq;
+      Map<Boolean, List<Term>> p = zeroForm().left.stream().collect(partitioningBy(t -> t.isVariable(name)));
+      List<Term> right = p.get(false).stream().map(Term::negated).toList();
+      Equation eq = new Equation(p.get(true), right);
+      return signum(eq.left.get(0).coefficient()) == -1 ? eq.multiply(-1) : eq;
     }
 
     public Equation multiply(int amount) {
