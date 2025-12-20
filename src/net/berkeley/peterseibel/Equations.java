@@ -465,7 +465,7 @@ public class Equations {
 
     if (verbose) IO.println(m);
 
-    Map<String, List<Integer>> variables = buttonVariables(m.buttonsAsLists());
+    Map<String, List<Integer>> variables = buttonVariables(m.buttons());
     Set<Equation> eqs = buttonSums(m.joltages(), variables);
 
     if (verbose) {

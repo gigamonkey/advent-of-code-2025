@@ -12,12 +12,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
 
   private static final Pattern pat = Pattern.compile("\\[(.*)\\] (.*?) \\{(.*?)\\}");
 
-  public record Machine(
-      int goal,
-      int[] buttons,
-      List<List<Integer>> buttonsAsLists,
-      List<Integer> joltages,
-      String spec) {
+  public record Machine(int lights, List<List<Integer>> buttons, List<Integer> joltages) {
 
     static Machine valueOf(String spec) {
       Matcher m = pat.matcher(spec);
@@ -25,42 +20,27 @@ public class Day10_Factory extends Solution<List<String>, Long> {
         String lights = m.group(1);
         String buttons = m.group(2);
         String joltages = m.group(3);
-        return new Machine(
-            parseLights(lights),
-            parseButtons(buttons),
-            parseButtonsAsLists(buttons),
-            parseJoltages(joltages),
-            spec);
+        return new Machine(parseLights(lights), parseButtons(buttons), parseJoltages(joltages));
       } else {
         throw new RuntimeException("Bad match against " + spec);
       }
     }
 
+    public int[] buttonBits() {
+      return buttons.stream().mapToInt(this::toBits).toArray();
+    }
+
+    private int toBits(List<Integer> nums) {
+      return nums.stream().mapToInt(n -> n).reduce(0, (bits, n) -> bits | (1 << n));
+    }
+
     private static int parseLights(String s) {
-      int goal = 0;
-      for (int i = 0; i < s.length(); i++) {
-        if (s.charAt(i) == '#') goal |= (1 << i);
-      }
-      return goal;
+      int top = 1 << (s.length() - 1);
+      return s.codePoints().map(c -> c == '#' ? top : 0).reduce(0, (bits, b) -> (bits >>> 1) | b);
     }
 
-    private static int[] parseButtons(String buttons) {
-      return stream(buttons.trim().split("\\s+"))
-          .map(s -> s.substring(1, s.length() - 1))
-          .map(s -> stream(s.split(",")).mapToInt(Integer::parseInt).toArray())
-          .mapToInt(
-              nums -> {
-                int b = 0;
-                for (int n : nums) {
-                  b |= (1 << n);
-                }
-                return b;
-              })
-          .toArray();
-    }
-
-    private static List<List<Integer>> parseButtonsAsLists(String buttons) {
-      return stream(buttons.trim().split("\\s+"))
+    private static List<List<Integer>> parseButtons(String buttons) {
+      return stream(buttons.split("\\s+"))
           .map(s -> s.substring(1, s.length() - 1))
           .map(s -> stream(s.split(",")).map(Integer::valueOf).toList())
           .toList();
@@ -76,16 +56,16 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part1(List<String> lines) {
-    return machines(lines).stream().mapToLong(m -> minPresses(m.goal(), m.buttons())).sum();
+    return machines(lines).stream().mapToLong(m -> minPresses(m.lights(), m.buttonBits())).sum();
   }
 
   public Long part2(List<String> lines) {
     return machines(lines).stream().mapToLong(Equations::answer).sum();
   }
 
-  private int minPresses(int goal, int[] buttons) {
+  private int minPresses(int lights, int[] buttons) {
     return presses(buttons)
-        .filter(p -> p.result() == goal)
+        .filter(p -> p.result() == lights)
         .findFirst()
         .map(Presses::num)
         .orElseThrow();
