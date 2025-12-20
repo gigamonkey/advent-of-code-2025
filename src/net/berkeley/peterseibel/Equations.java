@@ -446,7 +446,7 @@ public class Equations {
 
   public static int answer(Day10_Factory.Machine m) {
 
-    if (verbose) IO.println(m);
+    if (verbose || true) IO.println(m);
 
     Map<String, List<Integer>> variables = buttonVariables(m.buttonsAsLists());
     Set<Equation> eqs = buttonSums(m.joltages(), variables);
@@ -482,8 +482,12 @@ public class Equations {
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
 
+    if (freeVars.isEmpty()) {
+      return Term.sum(presses.right(), Map.of());
+    }
+
     if (verbose) IO.println(isos);
-    if (verbose) IO.println(freeVars);
+    if (verbose || true) IO.println(freeVars);
 
     int limit =
         freeVars.stream()
@@ -505,9 +509,7 @@ public class Equations {
   public static void main() {
 
     String[] specs = {
-      "[.##....#..] (0,1,3,4,5,6,7,8,9) (0,1,2,4,5,6,7,8,9) (0,1,2,4,6,7,9) (1,2,3,5,7,8,9) (1,3,8)"
-          + " (7) (3,6,8) (0,1,2,3,4,5,7,8) (0,2,4,5,6,7,9) (0,3,4,7,8) (2,3,6)"
-          + " {49,54,38,101,49,33,61,56,84,34}",
+      "[##.##..] (1,2,3,4,6) (2,4) (0,1,3,5) (0,2,3,5) (0,1,3,4) {14,25,30,34,25,10,20}"
     };
 
     for (String spec : specs) {
