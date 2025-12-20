@@ -10,7 +10,7 @@ import module java.base;
 
 public class Equations {
 
-  private static final boolean verbose = true;
+  private static final boolean verbose = false;
 
   private static final String[] alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 
@@ -192,7 +192,7 @@ public class Equations {
 
       Equation eq = new Equation(newLeft, newRight).simplify();
       Term v = newLeft.get(0);
-      if (v.coefficient() != 1) {
+      if (v.coefficient() == -1) {
         return eq.divide(v.coefficient());
       } else {
         return eq;
@@ -201,8 +201,8 @@ public class Equations {
 
     public Equation divide(int amount) {
       return new Equation(
-        left.stream().map(t -> t.divide(amount)).toList(),
-        right.stream().map(t -> t.divide(amount)).toList());
+          left.stream().map(t -> t.divide(amount)).toList(),
+          right.stream().map(t -> t.divide(amount)).toList());
     }
 
     public Equation isolateFirst() {
@@ -235,7 +235,7 @@ public class Equations {
     }
 
     public boolean isDefinition() {
-      return left.size() == 1 && left.get(0).isVariable();
+      return left.size() == 1 && left.get(0).isVariable() && left.get(0).coefficient() == 1;
     }
 
     public boolean isTautology() {
@@ -243,8 +243,7 @@ public class Equations {
       return left.isEmpty() && right.isEmpty();
     }
 
-
-      public String definedVariable() {
+    public String definedVariable() {
       assert isDefinition();
       if (left.get(0) instanceof Variable v) {
         return v.name();
@@ -274,7 +273,6 @@ public class Equations {
 
       return new Equation(newLeft, newRight);
     }
-
 
     private static List<Term> substituted(
         List<? extends Term> terms, String name, List<? extends Term> defn) {
@@ -341,7 +339,8 @@ public class Equations {
     return variables;
   }
 
-  private static Set<Equation> buttonSums(List<Integer> joltages, Map<String, List<Integer>> variables) {
+  private static Set<Equation> buttonSums(
+      List<Integer> joltages, Map<String, List<Integer>> variables) {
     Set<Equation> eqs = new HashSet<>();
     for (int i = 0; i < joltages.size(); i++) {
       eqs.add(Equation.sum(touchesJoltage(i, variables), joltages.get(i)));
@@ -360,7 +359,7 @@ public class Equations {
     if (eqns.isEmpty()) {
       return soFar;
     } else {
-      //Equation eq = eqns.removeLast().isolateFirst();
+      // Equation eq = eqns.removeLast().isolateFirst();
       Equation origEq = eqns.iterator().next();
       eqns.remove(origEq);
 
@@ -378,8 +377,16 @@ public class Equations {
         // eliminated so we don't have to worry about it being chosen again
         // in the recursive call.
         Set<Equation> newEqns =
-          new HashSet<>(eqns.stream().map(e -> e.substitute(var, defn)).filter(e -> !e.isTautology()).toList());
-        newSoFar.addAll(soFar.stream().map(e -> e.substitute(var, defn)).filter(e -> !e.isTautology()).toList());
+            new HashSet<>(
+                eqns.stream()
+                    .map(e -> e.substitute(var, defn))
+                    .filter(e -> !e.isTautology())
+                    .toList());
+        newSoFar.addAll(
+            soFar.stream()
+                .map(e -> e.substitute(var, defn))
+                .filter(e -> !e.isTautology())
+                .toList());
         return simplify(newEqns, newSoFar);
       } else {
         newSoFar.addAll(soFar);
@@ -389,10 +396,9 @@ public class Equations {
   }
 
   private static Map<String, List<? extends Term>> isolated(Set<Equation> eqns) {
-    return eqns
-      .stream()
-      .filter(Equation::isDefinition)
-      .collect(toMap(Equation::definedVariable, Equation::right));
+    return eqns.stream()
+        .filter(Equation::isDefinition)
+        .collect(toMap(Equation::definedVariable, Equation::right));
   }
 
   private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
@@ -400,18 +406,18 @@ public class Equations {
       return Stream.of(List.of(sum));
     } else {
       return rangeClosed(0, sum)
-        .boxed()
-        .flatMap(
-          first -> {
-            return kTuplesWithSum(k - 1, sum - first)
-              .map(
-                t -> {
-                  List<Integer> tuple = new ArrayList<>();
-                  tuple.add(first);
-                  tuple.addAll(t);
-                  return tuple;
-                });
-          });
+          .boxed()
+          .flatMap(
+              first -> {
+                return kTuplesWithSum(k - 1, sum - first)
+                    .map(
+                        t -> {
+                          List<Integer> tuple = new ArrayList<>();
+                          tuple.add(first);
+                          tuple.addAll(t);
+                          return tuple;
+                        });
+              });
     }
   }
 
@@ -419,21 +425,24 @@ public class Equations {
     return rangeClosed(0, max).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
   }
 
-
   private static Stream<Map<String, Integer>> bindings(Set<String> vars, int max) {
     List<String> vs = List.copyOf(vars);
-    return kTuples(vs.size(), max).map(values -> {
-        Map<String, Integer> bindings = new HashMap<>();
-        for (int i = 0; i < values.size(); i++) {
-          bindings.put(vs.get(i), values.get(i));
-        }
-        return bindings;
-      });
+    return kTuples(vs.size(), max)
+        .map(
+            values -> {
+              Map<String, Integer> bindings = new HashMap<>();
+              for (int i = 0; i < values.size(); i++) {
+                bindings.put(vs.get(i), values.get(i));
+              }
+              return bindings;
+            });
   }
 
-  private static boolean allNonNegative(Map<String, List<? extends Term>> isos, Map<String, Integer> bindings) {
+  private static boolean allNonNegative(
+      Map<String, List<? extends Term>> isos, Map<String, Integer> bindings) {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
-  };
+  }
+  ;
 
   public static int answer(Day10_Factory.Machine m) {
 
@@ -476,26 +485,29 @@ public class Equations {
     if (verbose) IO.println(isos);
     if (verbose) IO.println(freeVars);
 
-    int limit = freeVars.stream().map(variables::get).flatMap(b -> b.stream().map(n -> m.joltages().get(n))).mapToInt(n -> n).max().orElseThrow();
-
+    int limit =
+        freeVars.stream()
+            .map(variables::get)
+            .flatMap(b -> b.stream().map(n -> m.joltages().get(n)))
+            .mapToInt(n -> n)
+            .max()
+            .orElseThrow();
 
     final Equation p = presses;
 
-
-
     return bindings(freeVars, limit)
-      .filter(b -> allNonNegative(isos, b))
-      .mapToInt(b -> Term.sum(p.right(), b))
-      .min()
-      .orElseThrow();
-
+        .filter(b -> allNonNegative(isos, b))
+        .mapToInt(b -> Term.sum(p.right(), b))
+        .min()
+        .orElseThrow();
   }
-
 
   public static void main() {
 
     String[] specs = {
-      "[.##....#..] (0,1,3,4,5,6,7,8,9) (0,1,2,4,5,6,7,8,9) (0,1,2,4,6,7,9) (1,2,3,5,7,8,9) (1,3,8) (7) (3,6,8) (0,1,2,3,4,5,7,8) (0,2,4,5,6,7,9) (0,3,4,7,8) (2,3,6) {49,54,38,101,49,33,61,56,84,34}",
+      "[.##....#..] (0,1,3,4,5,6,7,8,9) (0,1,2,4,5,6,7,8,9) (0,1,2,4,6,7,9) (1,2,3,5,7,8,9) (1,3,8)"
+          + " (7) (3,6,8) (0,1,2,3,4,5,7,8) (0,2,4,5,6,7,9) (0,3,4,7,8) (2,3,6)"
+          + " {49,54,38,101,49,33,61,56,84,34}",
     };
 
     for (String spec : specs) {
