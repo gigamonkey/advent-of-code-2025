@@ -1,5 +1,6 @@
 package net.berkeley.peterseibel;
 
+import static net.berkeley.peterseibel.GCD.gcd;
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
 import static java.util.function.Predicate.not;
@@ -222,16 +223,16 @@ public class Equations {
 
     // All variables on left and constant on right
     public Equation standardForm() {
-      return new Equation(
-          Stream.concat(
-                  left.stream().filter(Term::isVariable),
-                  right.stream().filter(Term::isVariable).map(Term::negated))
-              .sorted()
-              .toList(),
-          Stream.concat(
-                  left.stream().filter(Term::isValue).map(Term::negated),
-                  right.stream().filter(Term::isVariable))
-              .toList());
+      List<? extends Term> terms = zeroForm().left;
+      return new Equation(terms.stream().filter(Term::isVariable).toList(),
+                          terms.stream().filter(Term::isValue).map(Term::negated).toList());
+    }
+
+    // Right hand side is zero.
+    public Equation zeroForm() {
+      List<Term> terms = new ArrayList<>(left);
+      terms.addAll(right.stream().map(Term::negated).toList());
+      return new Equation(simplifyTerms(terms), List.of(Value.ZERO));
     }
 
     public boolean isDefinition() {
@@ -266,7 +267,11 @@ public class Equations {
       newLeft.removeAll(common);
       newRight.removeAll(common);
 
-      return new Equation(newLeft, newRight);
+      return new Equation(newLeft, newRight).divide(greatestCommonDivisor(newLeft, newRight));
+    }
+
+    private int greatestCommonDivisor(List<Term> left, List<Term> right) {
+      return Stream.concat(left.stream(), right.stream()).mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
     }
 
     private static List<Term> substituted(
@@ -457,9 +462,9 @@ public class Equations {
     Map<String, List<? extends Term>> isos = isolated(eqns);
     Set<Equation> nonIsos = nonIsolated(eqns);
 
-    // if (!nonIsos.isEmpty()) {
-    //   nonIsos.stream().forEach(IO::println);
-    // }
+    if (!nonIsos.isEmpty()) {
+      nonIsos.stream().map(Equation::standardForm).forEach(IO::println);
+    }
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
