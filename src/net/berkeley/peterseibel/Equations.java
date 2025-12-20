@@ -1,13 +1,12 @@
 package net.berkeley.peterseibel;
 
-import module java.base;
-
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
 import static java.util.stream.IntStream.*;
-import static java.util.Arrays.stream;
+
+import module java.base;
 
 public class Equations {
 
@@ -39,6 +38,9 @@ public class Equations {
 
     public boolean isZero();
 
+    public static int sum(List<? extends Term> terms, Map<String, Integer> bindings) {
+      return terms.stream().mapToInt(t -> t.value(bindings)).sum();
+    }
   }
 
   private static record Variable(String name, int coefficient)
@@ -104,7 +106,8 @@ public class Equations {
       return combined;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       if (coefficient == 1) {
         return "" + name;
       } else if (coefficient == -1) {
@@ -123,7 +126,6 @@ public class Equations {
       return new Value(value * amount);
     }
 
-
     public int value(Map<String, Integer> bindings) {
       return value;
     }
@@ -141,8 +143,10 @@ public class Equations {
       return value == 0;
     }
 
-    @Override public String toString() { return "" + value; }
-
+    @Override
+    public String toString() {
+      return "" + value;
+    }
   }
 
   private static record Equation(List<? extends Term> left, List<? extends Term> right) {
@@ -177,8 +181,10 @@ public class Equations {
     }
 
     public Optional<Variable> firstVariable() {
-      Optional<Variable> v = left.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast);
-      return v.or(() -> right.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast));
+      Optional<Variable> v =
+          left.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast);
+      return v.or(
+          () -> right.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast));
     }
 
     // New equation with all variables on left and constant on right
@@ -216,25 +222,6 @@ public class Equations {
       return new Equation(substituted(left, name, defn), substituted(right, name, defn)).simplify();
     }
 
-    private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
-      if (k == 1) {
-        return Stream.of(List.of(sum));
-      } else {
-        return range(0, sum).boxed().flatMap(first -> {
-            return kTuplesWithSum(k - 1, sum - first).map(t -> {
-                List<Integer> tuple = new ArrayList<>();
-                tuple.add(first);
-                tuple.addAll(t);
-                return tuple;
-              });
-          });
-      }
-    }
-
-    private static Stream<List<Integer>> kTuples(int k) {
-      return iterate(0, n -> n + 1).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
-    }
-
     private Equation simplify() {
       List<Term> newLeft = simplifyTerms(left);
       List<Term> newRight = simplifyTerms(right);
@@ -248,16 +235,18 @@ public class Equations {
       return new Equation(newLeft, newRight);
     }
 
-    private static List<Term> substituted(List<? extends Term> terms, String name, List<? extends Term> defn) {
+    private static List<Term> substituted(
+        List<? extends Term> terms, String name, List<? extends Term> defn) {
       return terms.stream()
-        .flatMap(t -> {
-            if (t.isVariable(name)) {
-              return defn.stream().map(d -> d.multiply(t.coefficient()));
-            } else {
-              return Stream.of(t);
-            }
-          })
-        .toList();
+          .flatMap(
+              t -> {
+                if (t.isVariable(name)) {
+                  return defn.stream().map(d -> d.multiply(t.coefficient()));
+                } else {
+                  return Stream.of(t);
+                }
+              })
+          .toList();
     }
 
     private static List<Term> simplifyTerms(List<? extends Term> terms) {
@@ -279,8 +268,11 @@ public class Equations {
           terms.stream().filter(Term::isVariable).map(Variable.class::cast).toList());
     }
 
-    @Override public String toString() {
-      return left.stream().map(Object::toString).collect(joining(" + ")) + " = " + right.stream().map(Object::toString).collect(joining(" + "));
+    @Override
+    public String toString() {
+      return left.stream().map(Object::toString).collect(joining(" + "))
+          + " = "
+          + right.stream().map(Object::toString).collect(joining(" + "));
     }
   }
 
@@ -295,13 +287,10 @@ public class Equations {
     public System simplify() {
       return null;
     }
-
   }
-
 
   private Set<Variable> variables = new HashSet<>();
   private Map<Variable, Equation> bindings = new HashMap<>();
-
 
   private static Map<String, List<Integer>> buttonVariables(List<List<Integer>> buttons) {
     Map<String, List<Integer>> variables = new HashMap<>();
@@ -311,14 +300,14 @@ public class Equations {
     return variables;
   }
 
-  private static List<Equation> buttonSums(List<Integer> joltages, Map<String, List<Integer>> variables) {
+  private static List<Equation> buttonSums(
+      List<Integer> joltages, Map<String, List<Integer>> variables) {
     List<Equation> eqs = new ArrayList<>();
     for (int i = 0; i < joltages.size(); i++) {
       eqs.add(Equation.sum(touchesJoltage(i, variables), joltages.get(i)));
     }
     return eqs;
   }
-
 
   private static Set<String> touchesJoltage(int i, Map<String, List<Integer>> variables) {
     return variables.keySet().stream().filter(k -> variables.get(k).contains(i)).collect(toSet());
@@ -342,7 +331,8 @@ public class Equations {
         // This list of equations has all instances of the defined variable
         // eliminated so we don't have to worry about it being chosen again
         // in the recursive call.
-        List<Equation> newEqns = new ArrayList<>(eqns.stream().map(e -> e.substitute(var, defn)).toList());
+        List<Equation> newEqns =
+            new ArrayList<>(eqns.stream().map(e -> e.substitute(var, defn)).toList());
         newSoFar.addAll(soFar.stream().map(e -> e.substitute(var, defn)).toList());
         return simplify(newEqns, newSoFar);
       } else {
@@ -352,12 +342,62 @@ public class Equations {
     }
   }
 
+  private static Map<String, List<? extends Term>> isolated(List<Equation> eqns) {
+    return eqns
+      .stream()
+      .filter(Equation::isDefinition)
+      .collect(toMap(Equation::definedVariable, Equation::right));
+  }
 
+  private static Stream<List<Integer>> kTuplesWithSum(int k, int sum) {
+    if (k == 1) {
+      return Stream.of(List.of(sum));
+    } else {
+      return rangeClosed(0, sum)
+        .boxed()
+        .flatMap(
+          first -> {
+            return kTuplesWithSum(k - 1, sum - first)
+              .map(
+                t -> {
+                  List<Integer> tuple = new ArrayList<>();
+                  tuple.add(first);
+                  tuple.addAll(t);
+                  return tuple;
+                });
+          });
+    }
+  }
+
+  private static Stream<List<Integer>> kTuples(int k) {
+    return iterate(0, n -> n + 1).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
+  }
+
+
+  private static Stream<Map<String, Integer>> bindings(Set<String> vars) {
+    List<String> vs = List.copyOf(vars);
+    return kTuples(vs.size()).map(values -> {
+        Map<String, Integer> bindings = new HashMap<>();
+        for (int i = 0; i < values.size(); i++) {
+          bindings.put(vs.get(i), values.get(i));
+        }
+        return bindings;
+      });
+  }
+
+  private static boolean allNonNegative(Map<String, List<? extends Term>> isos, Map<String, Integer> bindings) {
+    return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
+  };
 
   public static void main() {
-    String spec = "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}";
 
-    Day10_Factory.Machine m = Day10_Factory.Machine.valueOf(spec);
+    String[] specs = {
+      "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}",
+      "[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}",
+      "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}",
+    };
+
+    Day10_Factory.Machine m = Day10_Factory.Machine.valueOf(specs[2]);
 
     IO.println(m);
 
@@ -373,14 +413,14 @@ public class Equations {
     IO.println("Isolated equations");
     foo.forEach(IO::println);
 
-
     List<Equation> newEqns = simplify(eqs, List.of());
     IO.println("Simplified equations");
     newEqns.forEach(IO::println);
 
-    Equation presses = new Equation(
-      List.of(Variable.of("presses")),
-      variables.keySet().stream().map(Variable::of).toList());
+    Equation presses =
+        new Equation(
+            List.of(Variable.of("presses")),
+            variables.keySet().stream().map(Variable::of).toList());
 
     IO.println(presses);
 
@@ -391,6 +431,24 @@ public class Equations {
     }
 
     IO.println(presses);
+
+    Map<String, List<? extends Term>> isos = isolated(newEqns);
+
+    Set<String> freeVars = variables.keySet();
+    freeVars.removeAll(isos.keySet());
+
+    IO.println(isos);
+    IO.println(freeVars);
+
+    final Equation p = presses;
+
+    bindings(freeVars)
+      .filter(b -> allNonNegative(isos, b))
+      .limit(100)
+      .forEach(b -> {
+          IO.println(b + " " + Term.sum(p.right(), b));
+        });
+
 
     // 4. Eliminate that variable from all other equations in original set and in new set.
 
@@ -407,8 +465,5 @@ public class Equations {
 
     // Put everything in standard form?
 
-
-
   }
-
 }
