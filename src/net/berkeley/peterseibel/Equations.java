@@ -287,9 +287,10 @@ public class Equations {
     }
 
     private static List<Term> simplifyTerms(List<? extends Term> terms) {
-      return Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
-          .filter(t -> !t.isZero())
-          .collect(toCollection(ArrayList::new));
+      List<Term> newTerms = Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
+        .filter(t -> !t.isZero())
+        .collect(toCollection(ArrayList::new));
+      return newTerms.isEmpty() ? new ArrayList<>(List.of(Value.ZERO)) : newTerms;
     }
 
     private static Term simplifyConstants(List<? extends Term> terms) {
@@ -450,13 +451,17 @@ public class Equations {
 
   public static int answer(Day10_Factory.Machine m) {
 
-    Map<String, List<Integer>> variables = buttonVariables(m.buttons());
-    Set<Equation> eqns = simplify(buttonSums(m.joltages(), variables), Set.of());
+    var variables = buttonVariables(m.buttons());
+    var eqns = simplify(buttonSums(m.joltages(), variables), Set.of());
 
-    Equation presses = presses(eqns, variables);
+    var presses = presses(eqns, variables);
 
     Map<String, List<? extends Term>> isos = isolated(eqns);
     Set<Equation> nonIsos = nonIsolated(eqns);
+
+    // if (!nonIsos.isEmpty()) {
+    //   nonIsos.stream().forEach(IO::println);
+    // }
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
@@ -466,16 +471,13 @@ public class Equations {
       return Term.sum(presses.right(), Map.of());
     } else {
 
-      int limit = maxPresses(m, freeVars, variables);
-
-      final Equation p = presses;
-
-      return bindings(freeVars, limit)
-          .filter(b -> allNonNegative(isos, b))
-          .filter(b -> allTrue(nonIsos, b))
-          .mapToInt(b -> Term.sum(p.right(), b))
-          .min()
-          .orElseThrow();
+      var right = presses.right();
+      return bindings(freeVars, maxPresses(m, freeVars, variables))
+        .filter(b -> allNonNegative(isos, b))
+        .filter(b -> allTrue(nonIsos, b))
+        .mapToInt(b -> Term.sum(right, b))
+        .min()
+        .orElseThrow();
     }
   }
 }
