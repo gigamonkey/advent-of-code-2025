@@ -28,6 +28,8 @@ public class Equations {
 
     public Term multiply(int amount);
 
+    public Term divide(int amount);
+
     public default Term negated() {
       return multiply(-1);
     }
@@ -64,6 +66,11 @@ public class Equations {
 
     public Term multiply(int amount) {
       return new Variable(name, coefficient * amount);
+    }
+
+    public Term divide(int amount) {
+      assert coefficient % amount == 0;
+      return new Variable(name, coefficient / amount);
     }
 
     public int value(Map<String, Integer> bindings) {
@@ -126,6 +133,11 @@ public class Equations {
       return new Value(value * amount);
     }
 
+    public Term divide(int amount) {
+      assert value % amount == 0;
+      return new Value(value / amount);
+    }
+
     public int value(Map<String, Integer> bindings) {
       return value;
     }
@@ -160,6 +172,7 @@ public class Equations {
       IO.println("isolating " + name);
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
+
       for (Term t : left) {
         if (t.isVariable(name)) {
           newLeft.add(t);
@@ -174,7 +187,20 @@ public class Equations {
           newRight.add(t);
         }
       }
-      return new Equation(newLeft, newRight).simplify();
+
+      Equation eq = new Equation(newLeft, newRight).simplify();
+      Term v = newLeft.get(0);
+      if (v.coefficient() != 1) {
+        return eq.divide(v.coefficient());
+      } else {
+        return eq;
+      }
+    }
+
+    public Equation divide(int amount) {
+      return new Equation(
+        left.stream().map(t -> t.divide(amount)).toList(),
+        right.stream().map(t -> t.divide(amount)).toList());
     }
 
     public Equation isolateFirst() {
@@ -402,15 +428,8 @@ public class Equations {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
   };
 
-  public static void main() {
-
-    String[] specs = {
-      "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}",
-      "[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}",
-      "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}",
-    };
-
-    Day10_Factory.Machine m = Day10_Factory.Machine.valueOf(specs[2]);
+  public static int answer(String spec) {
+    Day10_Factory.Machine m = Day10_Factory.Machine.valueOf(spec);
 
     IO.println(m);
 
@@ -454,29 +473,25 @@ public class Equations {
 
 
 
-    int answer = bindings(freeVars, limit)
+    return bindings(freeVars, limit)
       .filter(b -> allNonNegative(isos, b))
       .mapToInt(b -> Term.sum(p.right(), b))
       .min()
       .orElseThrow();
 
-    IO.println(answer);
+  }
 
 
-    // 4. Eliminate that variable from all other equations in original set and in new set.
+  public static void main() {
 
-    // 5. Put isolated equation in new set.
+    String[] specs = {
+      "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}",
+      "[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}",
+      "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}",
+    };
 
-    // 6. Unless original set is empty, go to step 3.
-
-    // At this point the new set should contain a bunch of isolated-variable
-    // equations. And the variables on the left hand side will have been removed
-    // from the right hand sides. However there will likely one or more
-    // variables on the right hand side that don't have an isolated definition
-    // (because otherwise they would have been eliminated from the right hand
-    // sides.)
-
-    // Put everything in standard form?
-
+    for (String spec : specs) {
+      IO.println(answer(spec));
+    }
   }
 }
