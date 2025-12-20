@@ -207,15 +207,13 @@ public class Equations {
 
     // All variables on left and constant on right
     public Equation standardForm() {
-      List<? extends Term> terms = zeroForm().left;
-      return new Equation(terms.stream().filter(Term::isVariable).toList(),
-                          terms.stream().filter(Term::isValue).map(Term::negated).toList());
+      Map<Boolean, List<Term>> p = zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
+      return new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
     }
 
     // Right hand side is zero.
     public Equation zeroForm() {
-      List<Term> terms = new ArrayList<>(left);
-      terms.addAll(right.stream().map(Term::negated).toList());
+      List<Term> terms = Stream.concat(left.stream(), right.stream().map(Term::negated)).toList();
       return new Equation(simplifyTerms(terms), List.of(Value.ZERO));
     }
 
