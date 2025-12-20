@@ -10,9 +10,9 @@ import module java.base;
 
 public class Equations {
 
-  private static final boolean verbose = false;
+  private static final boolean verbose = true;
 
-  private static final String[] alphabet = "abcdefghijqlmnopqrstuvwxyz".split("");
+  private static final String[] alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 
   static sealed interface Term permits Variable, Value {
 
@@ -171,7 +171,7 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
-      if (verbose) IO.println("isolating " + name);
+      if (verbose) IO.println("isolating " + name + " in " + this);
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
 
@@ -254,6 +254,11 @@ public class Equations {
     }
 
     private Equation substitute(String name, List<? extends Term> defn) {
+
+      if (verbose) {
+        IO.println("Substituting " + defn + " for " + name + " in " + this);
+      }
+
       return new Equation(substituted(left, name, defn), substituted(right, name, defn)).simplify();
     }
 
@@ -490,9 +495,7 @@ public class Equations {
   public static void main() {
 
     String[] specs = {
-      "[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}",
-      "[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}",
-      "[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}",
+      "[.##....#..] (0,1,3,4,5,6,7,8,9) (0,1,2,4,5,6,7,8,9) (0,1,2,4,6,7,9) (1,2,3,5,7,8,9) (1,3,8) (7) (3,6,8) (0,1,2,3,4,5,7,8) (0,2,4,5,6,7,9) (0,3,4,7,8) (2,3,6) {49,54,38,101,49,33,61,56,84,34}",
     };
 
     for (String spec : specs) {
