@@ -382,14 +382,14 @@ public class Equations {
     }
   }
 
-  private static Stream<List<Integer>> kTuples(int k) {
-    return iterate(0, n -> n + 1).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
+  private static Stream<List<Integer>> kTuples(int k, int max) {
+    return rangeClosed(0, max).boxed().flatMap(sum -> kTuplesWithSum(k, sum));
   }
 
 
-  private static Stream<Map<String, Integer>> bindings(Set<String> vars) {
+  private static Stream<Map<String, Integer>> bindings(Set<String> vars, int max) {
     List<String> vs = List.copyOf(vars);
-    return kTuples(vs.size()).map(values -> {
+    return kTuples(vs.size(), max).map(values -> {
         Map<String, Integer> bindings = new HashMap<>();
         for (int i = 0; i < values.size(); i++) {
           bindings.put(vs.get(i), values.get(i));
@@ -447,14 +447,20 @@ public class Equations {
     IO.println(isos);
     IO.println(freeVars);
 
+    int limit = freeVars.stream().map(variables::get).flatMap(b -> b.stream().map(n -> m.joltages().get(n))).mapToInt(n -> n).max().orElseThrow();
+
+
     final Equation p = presses;
 
-    bindings(freeVars)
+
+
+    int answer = bindings(freeVars, limit)
       .filter(b -> allNonNegative(isos, b))
-      .limit(100)
-      .forEach(b -> {
-          IO.println(b + " " + Term.sum(p.right(), b));
-        });
+      .mapToInt(b -> Term.sum(p.right(), b))
+      .min()
+      .orElseThrow();
+
+    IO.println(answer);
 
 
     // 4. Eliminate that variable from all other equations in original set and in new set.
