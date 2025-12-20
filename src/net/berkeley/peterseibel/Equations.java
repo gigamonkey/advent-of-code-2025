@@ -11,8 +11,7 @@ import module java.base;
 
 public class Equations {
 
-  private static final boolean verbose = false;
-
+  // Names for variables. Assumes there are never more than 26 joltages.
   private static final String[] alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 
   static sealed interface Term permits Variable, Value {
@@ -172,7 +171,6 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
-      if (verbose) IO.println("isolating " + name + " in " + this);
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
 
@@ -206,18 +204,19 @@ public class Equations {
           right.stream().map(t -> t.divide(amount)).toList());
     }
 
-    public Equation isolateFirst() {
+    public Equation isolateOne() {
       return firstVariable().map(v -> isolate(v.name())).orElse(this);
     }
 
     public Optional<Variable> firstVariable() {
-      Optional<Variable> v =
-          left.stream()
-              .filter(t -> t.isVariable() && abs(t.coefficient()) == 1)
-              .findFirst()
-              .map(Variable.class::cast);
-      return v.or(
-          () -> right.stream().filter(t -> t.isVariable()).findFirst().map(Variable.class::cast));
+      return aVariable(left).or(() -> aVariable(right));
+    }
+
+    private Optional<Variable> aVariable(List<? extends Term> terms) {
+      return terms.stream()
+          .filter(t -> t.isVariable() && abs(t.coefficient()) == 1)
+          .findFirst()
+          .map(Variable.class::cast);
     }
 
     // New equation with all variables on left and constant on right
@@ -257,11 +256,6 @@ public class Equations {
     }
 
     private Equation substitute(String name, List<? extends Term> defn) {
-
-      if (verbose) {
-        IO.println("Substituting " + defn + " for " + name + " in " + this);
-      }
-
       return new Equation(substituted(left, name, defn), substituted(right, name, defn)).simplify();
     }
 
@@ -293,10 +287,9 @@ public class Equations {
     }
 
     private static List<Term> simplifyTerms(List<? extends Term> terms) {
-      List<Term> newTerms = new ArrayList<>();
-      newTerms.addAll(simplifyVariables(terms));
-      newTerms.add(simplifyConstants(terms));
-      return newTerms.stream().filter(t -> !t.isZero()).collect(toCollection(ArrayList::new));
+      return Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
+          .filter(t -> !t.isZero())
+          .collect(toCollection(ArrayList::new));
     }
 
     private static Term simplifyConstants(List<? extends Term> terms) {
@@ -312,9 +305,7 @@ public class Equations {
     }
 
     public boolean isTrue(Map<String, Integer> bindings) {
-      boolean r = Term.sum(left, bindings) == Term.sum(right, bindings);
-      // IO.println("Checking " + this + " is true with  " + bindings + " ==> " + r);
-      return r;
+      return Term.sum(left, bindings) == Term.sum(right, bindings);
     }
 
     @Override
@@ -324,22 +315,6 @@ public class Equations {
           + right.stream().map(Object::toString).collect(joining(" + "));
     }
   }
-
-  private static class System {
-    private Set<Equation> equations = new HashSet<>();
-
-    // add equations to system
-
-    // Boil the initial system of equations down to a system where for each
-    // original variable there is one equation with it on the left side and a
-    // right side consisting of only
-    public System simplify() {
-      return null;
-    }
-  }
-
-  private Set<Variable> variables = new HashSet<>();
-  private Map<Variable, Equation> bindings = new HashMap<>();
 
   private static Map<String, List<Integer>> buttonVariables(List<List<Integer>> buttons) {
     Map<String, List<Integer>> variables = new HashMap<>();
@@ -369,40 +344,31 @@ public class Equations {
     if (eqns.isEmpty()) {
       return soFar;
     } else {
-      // Equation eq = eqns.removeLast().isolateFirst();
       Equation origEq = eqns.iterator().next();
       eqns.remove(origEq);
+      Equation eq = origEq.isolateOne();
 
-      Equation eq = origEq.isolateFirst();
-
-      if (verbose) IO.println("Got isolated: " + eq + " is defn: " + eq.isDefinition());
-
-      Set<Equation> newSoFar = new HashSet<>();
-      newSoFar.add(eq);
+      Set<Equation> newSoFar = new HashSet<>(Set.of(eq));
 
       if (eq.isDefinition()) {
         String var = eq.firstVariable().orElseThrow().name();
         var defn = eq.right();
-        // This list of equations has all instances of the defined variable
-        // eliminated so we don't have to worry about it being chosen again
-        // in the recursive call.
-        Set<Equation> newEqns =
-            new HashSet<>(
-                eqns.stream()
-                    .map(e -> e.substitute(var, defn))
-                    .filter(e -> !e.isTautology())
-                    .toList());
-        newSoFar.addAll(
-            soFar.stream()
-                .map(e -> e.substitute(var, defn))
-                .filter(e -> !e.isTautology())
-                .toList());
-        return simplify(newEqns, newSoFar);
+        newSoFar.addAll(substituteVar(soFar, var, defn));
+        return simplify(substituteVar(eqns, var, defn), newSoFar);
+
       } else {
         newSoFar.addAll(soFar);
         return simplify(eqns, newSoFar);
       }
     }
+  }
+
+  private static Set<Equation> substituteVar(
+      Set<Equation> eqns, String var, List<? extends Term> defn) {
+    return eqns.stream()
+        .map(e -> e.substitute(var, defn))
+        .filter(e -> !e.isTautology())
+        .collect(toCollection(HashSet::new));
   }
 
   private static Map<String, List<? extends Term>> isolated(Set<Equation> eqns) {
@@ -461,41 +427,36 @@ public class Equations {
     return nonIsos.stream().allMatch(e -> e.isTrue(bindings));
   }
 
-  public static int answer(Day10_Factory.Machine m) {
+  private static Equation presses(Set<Equation> eqns, Map<String, List<Integer>> variables) {
+    var vars = variables.keySet().stream().map(Variable::of).toList();
+    Equation presses = new Equation(List.of(Variable.of("presses")), vars);
 
-    if (verbose) IO.println(m);
-
-    Map<String, List<Integer>> variables = buttonVariables(m.buttons());
-    Set<Equation> eqs = buttonSums(m.joltages(), variables);
-
-    if (verbose) {
-      IO.println("Initial equations");
-      eqs.forEach(IO::println);
-    }
-
-    Set<Equation> newEqns = simplify(eqs, Set.of());
-    if (verbose) {
-      IO.println("Simplified equations");
-      newEqns.forEach(IO::println);
-    }
-
-    Equation presses =
-        new Equation(
-            List.of(Variable.of("presses")),
-            variables.keySet().stream().map(Variable::of).toList());
-
-    if (verbose) IO.println(presses);
-
-    for (Equation eq : newEqns) {
+    for (Equation eq : eqns) {
       if (eq.isDefinition()) {
         presses = presses.substitute(eq.definedVariable(), eq.right());
       }
     }
+    return presses;
+  }
 
-    if (verbose) IO.println(presses);
+  private static int maxPresses(
+      Day10_Factory.Machine m, Set<String> freeVars, Map<String, List<Integer>> variables) {
+    return freeVars.stream()
+        .map(variables::get)
+        .mapToInt(
+            b -> b.stream().map(n -> m.joltages().get(n)).mapToInt(n -> n).min().orElseThrow())
+        .sum();
+  }
 
-    Map<String, List<? extends Term>> isos = isolated(newEqns);
-    Set<Equation> nonIsos = nonIsolated(newEqns);
+  public static int answer(Day10_Factory.Machine m) {
+
+    Map<String, List<Integer>> variables = buttonVariables(m.buttons());
+    Set<Equation> eqns = simplify(buttonSums(m.joltages(), variables), Set.of());
+
+    Equation presses = presses(eqns, variables);
+
+    Map<String, List<? extends Term>> isos = isolated(eqns);
+    Set<Equation> nonIsos = nonIsolated(eqns);
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
@@ -503,40 +464,18 @@ public class Equations {
     if (freeVars.isEmpty()) {
       assert presses.right().size() == 1;
       return Term.sum(presses.right(), Map.of());
-    }
+    } else {
 
-    if (verbose) IO.println(isos);
-    if (verbose) IO.println(freeVars);
+      int limit = maxPresses(m, freeVars, variables);
 
-    int limit =
-        freeVars.stream()
-            .map(variables::get)
-            .mapToInt(
-                b -> b.stream().map(n -> m.joltages().get(n)).mapToInt(n -> n).min().orElseThrow())
-            .sum();
-    // .max()
-    // .orElseThrow();
+      final Equation p = presses;
 
-    final Equation p = presses;
-
-    return bindings(freeVars, limit)
-        .filter(b -> allNonNegative(isos, b))
-        .filter(b -> allTrue(nonIsos, b))
-        .mapToInt(b -> Term.sum(p.right(), b))
-        .min()
-        .orElseThrow();
-  }
-
-  public static void main() {
-
-    String[] specs = {
-      "[..##.#####] (1,3,4,6,7,9) (2,4,7,9) (0,1,2,3,5,6,7,8,9) (3,4,9) (1,2,6,8,9) (0,1,5,6,8,9)"
-          + " (2,5,6,8,9) (2) (2,8,9) (0,1,2) (3,4,7) (0,1,2,3,4,5,7) (3,5)"
-          + " {24,56,89,38,45,33,59,46,56,93}",
-    };
-
-    for (String spec : specs) {
-      IO.println(answer(Day10_Factory.Machine.valueOf(spec)));
+      return bindings(freeVars, limit)
+          .filter(b -> allNonNegative(isos, b))
+          .filter(b -> allTrue(nonIsos, b))
+          .mapToInt(b -> Term.sum(p.right(), b))
+          .min()
+          .orElseThrow();
     }
   }
 }
