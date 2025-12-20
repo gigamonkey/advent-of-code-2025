@@ -1,6 +1,6 @@
 SHELL		:= bash -O globstar
 USERNAME	:= peterseibel
-MAIN_CLASS	:= net.berkeley.$(USERNAME).Equations
+MAIN_CLASS	:= net.berkeley.$(USERNAME).AdventOfCode
 
 solution_classes := $(wildcard src/net/berkeley/$(USERNAME)/Day*.java)
 first_file := src/net/berkeley/$(USERNAME)/AdventOfCode.java

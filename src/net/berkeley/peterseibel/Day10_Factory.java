@@ -76,18 +76,7 @@ public class Day10_Factory extends Solution<List<String>, Long> {
   }
 
   public Long part2(List<String> lines) {
-    // return machines(lines).stream().mapToLong(m -> minJoltagePresses(m.joltages(),
-    // m.buttonsAsLists())).sum();
-    return machines(lines).stream()
-        .mapToLong(
-            m -> {
-              IO.println("Machine %s".formatted(m));
-              // return semiStream(m.joltages(), m.buttonsAsLists());
-              int x = minimumWith(m.joltages(), m.buttonsAsLists());
-              IO.println("got: %d".formatted(x));
-              return x;
-            })
-        .sum();
+    return machines(lines).stream().peek(IO::println).mapToInt(Equations::answer).mapToLong(n -> n).sum();
   }
 
   record MemoKey(List<Integer> joltages, int numButtons) {}

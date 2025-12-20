@@ -10,6 +10,8 @@ import module java.base;
 
 public class Equations {
 
+  private static final boolean verbose = false;
+
   private static final String[] alphabet = "abcdefghijqlmnopqrstuvwxyz".split("");
 
   static sealed interface Term permits Variable, Value {
@@ -169,7 +171,7 @@ public class Equations {
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
-      IO.println("isolating " + name);
+      if (verbose) IO.println("isolating " + name);
       List<Term> newLeft = new ArrayList<>();
       List<Term> newRight = new ArrayList<>();
 
@@ -359,7 +361,7 @@ public class Equations {
 
       Equation eq = origEq.isolateFirst();
 
-      IO.println("Got isolated: " + eq + " is defn: " + eq.isDefinition());
+      if (verbose) IO.println("Got isolated: " + eq + " is defn: " + eq.isDefinition());
 
       Set<Equation> newSoFar = new HashSet<>();
       newSoFar.add(eq);
@@ -428,27 +430,30 @@ public class Equations {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
   };
 
-  public static int answer(String spec) {
-    Day10_Factory.Machine m = Day10_Factory.Machine.valueOf(spec);
+  public static int answer(Day10_Factory.Machine m) {
 
-    IO.println(m);
+    if (verbose) IO.println(m);
 
     Map<String, List<Integer>> variables = buttonVariables(m.buttonsAsLists());
     Set<Equation> eqs = buttonSums(m.joltages(), variables);
 
-    IO.println("Initial equations");
-    eqs.forEach(IO::println);
+    if (verbose) {
+      IO.println("Initial equations");
+      eqs.forEach(IO::println);
+    }
 
     Set<Equation> newEqns = simplify(eqs, Set.of());
-    IO.println("Simplified equations");
-    newEqns.forEach(IO::println);
+    if (verbose) {
+      IO.println("Simplified equations");
+      newEqns.forEach(IO::println);
+    }
 
     Equation presses =
         new Equation(
             List.of(Variable.of("presses")),
             variables.keySet().stream().map(Variable::of).toList());
 
-    IO.println(presses);
+    if (verbose) IO.println(presses);
 
     for (Equation eq : newEqns) {
       if (eq.isDefinition()) {
@@ -456,15 +461,15 @@ public class Equations {
       }
     }
 
-    IO.println(presses);
+    if (verbose) IO.println(presses);
 
     Map<String, List<? extends Term>> isos = isolated(newEqns);
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
 
-    IO.println(isos);
-    IO.println(freeVars);
+    if (verbose) IO.println(isos);
+    if (verbose) IO.println(freeVars);
 
     int limit = freeVars.stream().map(variables::get).flatMap(b -> b.stream().map(n -> m.joltages().get(n))).mapToInt(n -> n).max().orElseThrow();
 
@@ -491,7 +496,7 @@ public class Equations {
     };
 
     for (String spec : specs) {
-      IO.println(answer(spec));
+      IO.println(answer(Day10_Factory.Machine.valueOf(spec)));
     }
   }
 }
