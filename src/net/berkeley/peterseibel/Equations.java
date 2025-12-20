@@ -190,12 +190,13 @@ public class Equations {
       }
 
       Equation eq = new Equation(newLeft, newRight).simplify();
-      Term v = newLeft.get(0);
-      if (signum(v.coefficient()) == -1) {
-        return eq.divide(-1);
-      } else {
-        return eq;
-      }
+      return signum(newLeft.get(0).coefficient()) == -1 ? eq.multiply(-1) : eq;
+    }
+
+    public Equation multiply(int amount) {
+      return new Equation(
+          left.stream().map(t -> t.multiply(amount)).toList(),
+          right.stream().map(t -> t.multiply(amount)).toList());
     }
 
     public Equation divide(int amount) {
@@ -219,22 +220,18 @@ public class Equations {
           .map(Variable.class::cast);
     }
 
-    // New equation with all variables on left and constant on right
+    // All variables on left and constant on right
     public Equation standardForm() {
-      List<Term> newLeft =
+      return new Equation(
           Stream.concat(
                   left.stream().filter(Term::isVariable),
                   right.stream().filter(Term::isVariable).map(Term::negated))
               .sorted()
-              .toList();
-
-      List<Term> newRight =
+              .toList(),
           Stream.concat(
                   left.stream().filter(Term::isValue).map(Term::negated),
                   right.stream().filter(Term::isVariable))
-              .toList();
-
-      return new Equation(newLeft, newRight).simplify();
+              .toList());
     }
 
     public boolean isDefinition() {
@@ -287,9 +284,10 @@ public class Equations {
     }
 
     private static List<Term> simplifyTerms(List<? extends Term> terms) {
-      List<Term> newTerms = Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
-        .filter(t -> !t.isZero())
-        .collect(toCollection(ArrayList::new));
+      List<Term> newTerms =
+          Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
+              .filter(t -> !t.isZero())
+              .collect(toCollection(ArrayList::new));
       return newTerms.isEmpty() ? new ArrayList<>(List.of(Value.ZERO)) : newTerms;
     }
 
@@ -473,11 +471,11 @@ public class Equations {
 
       var right = presses.right();
       return bindings(freeVars, maxPresses(m, freeVars, variables))
-        .filter(b -> allNonNegative(isos, b))
-        .filter(b -> allTrue(nonIsos, b))
-        .mapToInt(b -> Term.sum(right, b))
-        .min()
-        .orElseThrow();
+          .filter(b -> allNonNegative(isos, b))
+          .filter(b -> allTrue(nonIsos, b))
+          .mapToInt(b -> Term.sum(right, b))
+          .min()
+          .orElseThrow();
     }
   }
 }
