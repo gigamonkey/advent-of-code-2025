@@ -208,14 +208,36 @@ public class Equations {
     // All variables on left and constant on right
     public Equation standardForm() {
       Map<Boolean, List<Term>> p = zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
-      return new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
+
+      Equation eq = new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
+
+      return allNegative(eq.left) ? eq.multiply(-1) : eq;
     }
 
     // Right hand side is zero.
     public Equation zeroForm() {
-      List<Term> terms = Stream.concat(left.stream(), right.stream().map(Term::negated)).toList();
-      return new Equation(simplifyTerms(terms), List.of(Value.ZERO));
+
+      List<Term> terms = simplifyTerms(Stream.concat(left.stream(), right.stream().map(Term::negated)).toList());
+      boolean varsNegative = allNegative(terms.stream().filter(Term::isVariable).toList());
+
+      if (varsNegative) {
+        terms = terms.stream().map(t -> t.multiply(-1)).toList();
+      }
+
+      Equation eq = new Equation(terms, List.of(Value.ZERO));
+
+      int gcd = greatestCommonDivisor(terms);
+      if (gcd == 0) {
+        IO.println("gcd of " + eq + " is zero.");
+        return eq;
+      }
+      return eq.divide(gcd);
     }
+
+    private int greatestCommonDivisor(List<Term> terms) {
+      return terms.stream().mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
+    }
+
 
     public boolean isDefinition() {
       return left.size() == 1 && left.get(0).isVariable() && left.get(0).coefficient() == 1;
@@ -328,21 +350,45 @@ public class Equations {
    */
   private static Set<Equation> simplify(Set<Equation> eqns, Set<Equation> soFar) {
     if (eqns.isEmpty()) {
+      // FIXME: The commented out code below doesn't quite work because we may
+      // end up simplifying an equation into definition form but it was never
+      // substituted back into the other equations so we can end up with no
+      // freeVars but a presses equation that still has a variable in it.
       return soFar;
+        // .stream()
+        // .map(eq -> eq.isDefinition() ? eq : eq.standardForm())
+        // .collect(toSet());
     } else {
+
+      // Take any equation from the list of unprocessed and isolate a variable.
+      // (Conceivably that isn't possible and we'll just get back the original
+      // equation)
       Equation origEq = eqns.iterator().next();
       eqns.remove(origEq);
       Equation eq = origEq.isolateOne();
 
       Set<Equation> newSoFar = new HashSet<>(Set.of(eq));
 
+      // If we isolated a new variable
       if (eq.isDefinition()) {
         String var = eq.firstVariable().orElseThrow().name();
         var defn = eq.right();
+        // FIXME: as we reprocess all the already processed equations with the
+        // new subtitution we may make an equation could be something that could
+        // be turned into a definiton but we'll miss that since we add it to
+        // newSoFar and never try it again.
+        //
+        // Maybe split into changed and not changed and add changed ones back to
+        // eqns for further processing? If nothing changes then we've still
+        // moved at least one equation from eqns to soFar so we won't recurse.
+        // If something did change, it now has one less variable in it.
+
         newSoFar.addAll(substituteVar(soFar, var, defn));
+
         return simplify(substituteVar(eqns, var, defn), newSoFar);
 
       } else {
+        // We've moved one equation from eqns to soFar
         newSoFar.addAll(soFar);
         return simplify(eqns, newSoFar);
       }
@@ -409,6 +455,10 @@ public class Equations {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
   }
 
+  private static boolean allNegative(List<? extends Term> terms) {
+    return terms.stream().mapToInt(Term::coefficient).allMatch(n -> signum(n) == -1);
+  }
+
   private static boolean allTrue(Set<Equation> nonIsos, Map<String, Integer> bindings) {
     return nonIsos.stream().allMatch(e -> e.isTrue(bindings));
   }
@@ -444,15 +494,19 @@ public class Equations {
     Map<String, List<? extends Term>> isos = isolated(eqns);
     Set<Equation> nonIsos = nonIsolated(eqns);
 
-    if (!nonIsos.isEmpty()) {
-      nonIsos.stream().map(Equation::standardForm).forEach(IO::println);
-    }
+    // if (!nonIsos.isEmpty()) {
+    //   nonIsos.stream().forEach(e -> {
+    //       IO.println(e + " std: " + e.standardForm());
+    //     });
+    // }
 
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
 
+    //IO.println("freeVars " + freeVars);
+
     if (freeVars.isEmpty()) {
-      assert presses.right().size() == 1;
+      assert presses.right().size() == 1: "Bad presses " + presses + " from isos: " + isos + "; non: " + nonIsos;
       return Term.sum(presses.right(), Map.of());
     } else {
 
