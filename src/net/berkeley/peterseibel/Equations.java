@@ -214,16 +214,6 @@ public class Equations {
           .map(Variable.class::cast);
     }
 
-    // All variables on left and constant on right
-    public Equation standardForm() {
-      Map<Boolean, List<Term>> p =
-          zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
-
-      Equation eq = new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
-
-      return allNegative(eq.left) ? eq.multiply(-1) : eq;
-    }
-
     // Right hand side is zero.
     public Equation zeroForm() {
 
@@ -232,22 +222,22 @@ public class Equations {
       boolean varsNegative = allNegative(terms.stream().filter(Term::isVariable).toList());
 
       if (varsNegative) {
-        terms = terms.stream().map(t -> t.multiply(-1)).toList();
+        terms = terms.stream().map(Term::negated).toList();
       }
 
       Equation eq = new Equation(terms, List.of(Value.ZERO));
-
-      int gcd = greatestCommonDivisor(terms);
-      if (gcd == 0) {
-        IO.println("gcd of " + eq + " is zero.");
-        return eq;
-      }
-      return eq.divide(gcd);
+      return eq.divide(greatestCommonDivisor(terms));
     }
 
-    private int greatestCommonDivisor(List<Term> terms) {
-      return terms.stream().mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
+    // All variables on left and constant on right
+    public Equation standardForm() {
+      var p = zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
+
+      Equation eq = new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
+
+      return allNegative(eq.left) ? eq.multiply(-1) : eq;
     }
+
 
     public boolean isDefinition() {
       return left.size() == 1 && left.get(0).isVariable() && left.get(0).coefficient() == 1;
@@ -282,6 +272,10 @@ public class Equations {
       newRight.removeAll(common);
 
       return new Equation(newLeft, newRight).divide(greatestCommonDivisor(newLeft, newRight));
+    }
+
+    private int greatestCommonDivisor(List<Term> terms) {
+      return terms.stream().mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
     }
 
     private int greatestCommonDivisor(List<Term> left, List<Term> right) {
