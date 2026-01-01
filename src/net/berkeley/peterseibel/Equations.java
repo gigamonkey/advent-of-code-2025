@@ -1,12 +1,12 @@
 package net.berkeley.peterseibel;
 
-import static net.berkeley.peterseibel.GCD.gcd;
 import static java.lang.Math.*;
 import static java.util.Comparator.*;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Gatherers.*;
 import static java.util.stream.IntStream.*;
+import static net.berkeley.peterseibel.GCD.gcd;
 
 import module java.base;
 
@@ -43,7 +43,7 @@ public class Equations {
 
     public boolean isZero();
 
-    public static int sum(List<? extends Term> terms, Map<String, Integer> bindings) {
+    public static int sum(List<Term> terms, Map<String, Integer> bindings) {
       return terms.stream().mapToInt(t -> t.value(bindings)).sum();
     }
   }
@@ -164,15 +164,24 @@ public class Equations {
     }
   }
 
-  private static record Equation(List<? extends Term> left, List<? extends Term> right) {
+  private static record Equation(List<Term> left, List<Term> right) {
+
+    // Type trickery to deal with lists that are inferred to be of type
+    // List<Variable> or List<Value> Note that when the list comes from a stream
+    // it is already unmodifiable so the List.copyOf probably doesn't actually
+    // make a copy.
+    public static Equation of(List<? extends Term> left, List<? extends Term> right) {
+      return new Equation(List.copyOf(left), List.copyOf(right));
+    }
 
     public static Equation sum(Collection<String> vars, int total) {
-      return new Equation(vars.stream().map(Variable::of).toList(), List.of(new Value(total)));
+      return Equation.of(vars.stream().map(Variable::of).toList(), List.of(new Value(total)));
     }
 
     // Make a new equation with one variable isolated on the left
     public Equation isolate(String name) {
-      Map<Boolean, List<Term>> p = zeroForm().left.stream().collect(partitioningBy(t -> t.isVariable(name)));
+      Map<Boolean, List<Term>> p =
+          zeroForm().left.stream().collect(partitioningBy(t -> t.isVariable(name)));
       List<Term> right = p.get(false).stream().map(Term::negated).toList();
       Equation eq = new Equation(p.get(true), right);
       return signum(eq.left.get(0).coefficient()) == -1 ? eq.multiply(-1) : eq;
@@ -198,7 +207,7 @@ public class Equations {
       return aVariable(left).or(() -> aVariable(right));
     }
 
-    private Optional<Variable> aVariable(List<? extends Term> terms) {
+    private Optional<Variable> aVariable(List<Term> terms) {
       return terms.stream()
           .filter(t -> t.isVariable() && abs(t.coefficient()) == 1)
           .findFirst()
@@ -207,7 +216,8 @@ public class Equations {
 
     // All variables on left and constant on right
     public Equation standardForm() {
-      Map<Boolean, List<Term>> p = zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
+      Map<Boolean, List<Term>> p =
+          zeroForm().left.stream().collect(partitioningBy(Term::isVariable));
 
       Equation eq = new Equation(p.get(true), p.get(false).stream().map(Term::negated).toList());
 
@@ -217,7 +227,8 @@ public class Equations {
     // Right hand side is zero.
     public Equation zeroForm() {
 
-      List<Term> terms = simplifyTerms(Stream.concat(left.stream(), right.stream().map(Term::negated)).toList());
+      List<Term> terms =
+          simplifyTerms(Stream.concat(left.stream(), right.stream().map(Term::negated)).toList());
       boolean varsNegative = allNegative(terms.stream().filter(Term::isVariable).toList());
 
       if (varsNegative) {
@@ -238,7 +249,6 @@ public class Equations {
       return terms.stream().mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
     }
 
-
     public boolean isDefinition() {
       return left.size() == 1 && left.get(0).isVariable() && left.get(0).coefficient() == 1;
     }
@@ -257,7 +267,7 @@ public class Equations {
       }
     }
 
-    private Equation substitute(String name, List<? extends Term> defn) {
+    private Equation substitute(String name, List<Term> defn) {
       return new Equation(substituted(left, name, defn), substituted(right, name, defn)).simplify();
     }
 
@@ -275,11 +285,14 @@ public class Equations {
     }
 
     private int greatestCommonDivisor(List<Term> left, List<Term> right) {
-      return Stream.concat(left.stream(), right.stream()).mapToInt(Term::coefficient).map(Math::abs).reduce(GCD::gcd).orElse(1);
+      return Stream.concat(left.stream(), right.stream())
+          .mapToInt(Term::coefficient)
+          .map(Math::abs)
+          .reduce(GCD::gcd)
+          .orElse(1);
     }
 
-    private static List<Term> substituted(
-        List<? extends Term> terms, String name, List<? extends Term> defn) {
+    private static List<Term> substituted(List<Term> terms, String name, List<Term> defn) {
       return terms.stream()
           .flatMap(
               t -> {
@@ -292,7 +305,7 @@ public class Equations {
           .toList();
     }
 
-    private static List<Term> simplifyTerms(List<? extends Term> terms) {
+    private static List<Term> simplifyTerms(List<Term> terms) {
       List<Term> newTerms =
           Stream.concat(simplifyVariables(terms).stream(), Stream.of(simplifyConstants(terms)))
               .filter(t -> !t.isZero())
@@ -300,14 +313,14 @@ public class Equations {
       return newTerms.isEmpty() ? new ArrayList<>(List.of(Value.ZERO)) : newTerms;
     }
 
-    private static Term simplifyConstants(List<? extends Term> terms) {
+    private static Term simplifyConstants(List<Term> terms) {
       return terms.stream()
           .filter(Term::isValue)
           .map(Value.class::cast)
           .reduce(Value.ZERO, Value::add);
     }
 
-    private static List<Term> simplifyVariables(List<? extends Term> terms) {
+    private static List<Term> simplifyVariables(List<Term> terms) {
       return Variable.combine(
           terms.stream().filter(Term::isVariable).map(Variable.class::cast).toList());
     }
@@ -355,9 +368,9 @@ public class Equations {
       // substituted back into the other equations so we can end up with no
       // freeVars but a presses equation that still has a variable in it.
       return soFar;
-        // .stream()
-        // .map(eq -> eq.isDefinition() ? eq : eq.standardForm())
-        // .collect(toSet());
+      // .stream()
+      // .map(eq -> eq.isDefinition() ? eq : eq.standardForm())
+      // .collect(toSet());
     } else {
 
       // Take any equation from the list of unprocessed and isolate a variable.
@@ -395,15 +408,14 @@ public class Equations {
     }
   }
 
-  private static Set<Equation> substituteVar(
-      Set<Equation> eqns, String var, List<? extends Term> defn) {
+  private static Set<Equation> substituteVar(Set<Equation> eqns, String var, List<Term> defn) {
     return eqns.stream()
         .map(e -> e.substitute(var, defn))
         .filter(e -> !e.isTautology())
         .collect(toCollection(HashSet::new));
   }
 
-  private static Map<String, List<? extends Term>> isolated(Set<Equation> eqns) {
+  private static Map<String, List<Term>> isolated(Set<Equation> eqns) {
     return eqns.stream()
         .filter(Equation::isDefinition)
         .collect(toMap(Equation::definedVariable, Equation::right));
@@ -451,11 +463,11 @@ public class Equations {
   }
 
   private static boolean allNonNegative(
-      Map<String, List<? extends Term>> isos, Map<String, Integer> bindings) {
+      Map<String, List<Term>> isos, Map<String, Integer> bindings) {
     return isos.values().stream().allMatch(ts -> Term.sum(ts, bindings) >= 0);
   }
 
-  private static boolean allNegative(List<? extends Term> terms) {
+  private static boolean allNegative(List<Term> terms) {
     return terms.stream().mapToInt(Term::coefficient).allMatch(n -> signum(n) == -1);
   }
 
@@ -465,7 +477,7 @@ public class Equations {
 
   private static Equation presses(Set<Equation> eqns, Map<String, List<Integer>> variables) {
     var vars = variables.keySet().stream().map(Variable::of).toList();
-    Equation presses = new Equation(List.of(Variable.of("presses")), vars);
+    Equation presses = Equation.of(List.of(Variable.of("presses")), vars);
 
     for (Equation eq : eqns) {
       if (eq.isDefinition()) {
@@ -491,7 +503,7 @@ public class Equations {
 
     var presses = presses(eqns, variables);
 
-    Map<String, List<? extends Term>> isos = isolated(eqns);
+    Map<String, List<Term>> isos = isolated(eqns);
     Set<Equation> nonIsos = nonIsolated(eqns);
 
     // if (!nonIsos.isEmpty()) {
@@ -503,10 +515,11 @@ public class Equations {
     Set<String> freeVars = variables.keySet();
     freeVars.removeAll(isos.keySet());
 
-    //IO.println("freeVars " + freeVars);
+    // IO.println("freeVars " + freeVars);
 
     if (freeVars.isEmpty()) {
-      assert presses.right().size() == 1: "Bad presses " + presses + " from isos: " + isos + "; non: " + nonIsos;
+      assert presses.right().size() == 1
+          : "Bad presses " + presses + " from isos: " + isos + "; non: " + nonIsos;
       return Term.sum(presses.right(), Map.of());
     } else {
 
